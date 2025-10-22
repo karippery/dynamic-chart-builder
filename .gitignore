@@ -1,0 +1,64 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+.env
+.env.local
+.env.*.local
+
+# Virtual Environments (even though you use Poetry, good to have)
+venv/
+ENV/
+env/
+.venv/
+.env/
+
+# Poetry
+# poetry.lock  # Optional: commit this in most cases, but ignore if you prefer
+# NOTE: Generally, you SHOULD commit poetry.lock for reproducible builds.
+# Only ignore if you have a specific reason.
+
+# Docker
+.dockerignore
+compose*.yml  # Optional: if you have local overrides like compose.local.yml
+.docker/
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Python
+.Python
+coverage/
+htmlcov/
+.pytest_cache/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local config (if any)
+config.json
+local_settings.py
