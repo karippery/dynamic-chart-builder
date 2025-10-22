@@ -148,3 +148,27 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+AGGREGATION_CACHE_CONFIG = {
+    'KEY_PREFIX': 'aggregation',
+    'DEFAULT_TIMEOUT': 3600,  # 1 hour
+    'TIMEOUTS': {
+        '1m': 300,   # 5 minutes
+        '5m': 300,   # 5 minutes
+        '15m': 900,  # 15 minutes
+        '1h': 3600,  # 1 hour
+        '6h': 7200,  # 2 hours
+        '1d': 7200,  # 2 hours
+    },
+    'DEFAULT_TIME_BUCKET': '1h',
+}

@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.core.cache import cache
+from django.conf import settings
 
 from kpi.models import Detection
 from kpi.serializers import AggregationRequestSerializer, AggregationSerializer
@@ -19,6 +21,40 @@ class AggregationView(APIView):
     """
     filter_backends = (DjangoFilterBackend,)
     filterset_class = DetectionFilter
+    
+    def _generate_cache_key(self, validated_data):
+        """
+        Generate a unique cache key based on all query parameters.
+        """
+        cache_config = getattr(settings, 'AGGREGATION_CACHE_CONFIG', {})
+        key_prefix = cache_config.get('KEY_PREFIX', 'aggregation')
+        
+        # Create a sorted string representation of all parameters
+        sorted_params = sorted([
+            f"{key}:{str(value)}" 
+            for key, value in validated_data.items() 
+            if value is not None
+        ])
+        
+        param_string = "|".join(sorted_params)
+        cache_key = f"{key_prefix}:{param_string}"
+        
+        # Use MD5 hash if the key is too long (Redis key length limit is 512MB but shorter is better)
+        if len(cache_key) > 200:
+            import hashlib
+            cache_key = f"{key_prefix}:{hashlib.md5(cache_key.encode()).hexdigest()}"
+            
+        return cache_key
+    
+    def _get_cache_timeout(self, time_bucket):
+        """
+        Get cache timeout based on time_bucket parameter.
+        """
+        cache_config = getattr(settings, 'AGGREGATION_CACHE_CONFIG', {})
+        timeouts = cache_config.get('TIMEOUTS', {})
+        default_timeout = cache_config.get('DEFAULT_TIMEOUT', 3600)
+        
+        return timeouts.get(time_bucket, default_timeout)
     
     @extend_schema(
         parameters=[
@@ -80,9 +116,23 @@ class AggregationView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get aggregation results
+        validated_data = serializer.validated_data
+        
+        # Check if caching should be bypassed
+        bypass_cache = request.query_params.get('bypass_cache', '').lower() in ('true', '1', 'yes')
+        
+        if not bypass_cache:
+            # Generate cache key
+            cache_key = self._generate_cache_key(validated_data)
+            
+            # Try to get cached data
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                return Response(cached_data)
+        
         try:
-            aggregation_result = AggregationService.aggregate_data(serializer.validated_data)
+            # Get aggregation results
+            aggregation_result = AggregationService.aggregate_data(validated_data)
             
             # Handle both old and new return formats
             if isinstance(aggregation_result, dict) and 'results' in aggregation_result:
@@ -93,18 +143,30 @@ class AggregationView(APIView):
             else:
                 # Old format (backward compatibility)
                 results = aggregation_result
-                actual_bucket = serializer.validated_data.get('time_bucket', '1h')
+                actual_bucket = validated_data.get('time_bucket', '1h')
             
-            # Return all results
+            # Serialize data
             serialized_data = AggregationSerializer(results, many=True).data
             
-            return Response({
+            # Prepare response
+            response_data = {
                 'series': serialized_data,
                 'meta': {
-                    'metric': serializer.validated_data.get('metric'),
-                    'bucket': actual_bucket  # Use the actual bucket used
+                    'metric': validated_data.get('metric'),
+                    'bucket': actual_bucket,  # Use the actual bucket used
+                    'cached': False
                 }
-            })
+            }
+            
+            # Cache the response if not bypassing cache
+            if not bypass_cache:
+                cache_key = self._generate_cache_key(validated_data)
+                timeout = self._get_cache_timeout(actual_bucket)
+                cache.set(cache_key, response_data, timeout)
+                response_data['meta']['cached'] = True
+                response_data['meta']['cache_ttl'] = timeout
+            
+            return Response(response_data)
             
         except Exception as e:
             return Response(
