@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.core.cache import cache
-from django.conf import settings
+from config.cache_utils import generate_cache_key, get_cache_timeout
 from kpi.serializers.aggregation_serializer import AggregationRequestSerializer, AggregationSerializer
 
 from ..filters import DetectionFilter
@@ -19,40 +19,7 @@ class AggregationView(APIView):
     """
     filter_backends = (DjangoFilterBackend,)
     filterset_class = DetectionFilter
-    
-    def _generate_cache_key(self, validated_data):
-        """
-        Generate a unique cache key based on all query parameters.
-        """
-        cache_config = getattr(settings, 'AGGREGATION_CACHE_CONFIG', {})
-        key_prefix = cache_config.get('KEY_PREFIX', 'aggregation')
-        
-        # Create a sorted string representation of all parameters
-        sorted_params = sorted([
-            f"{key}:{str(value)}" 
-            for key, value in validated_data.items() 
-            if value is not None
-        ])
-        
-        param_string = "|".join(sorted_params)
-        cache_key = f"{key_prefix}:{param_string}"
-        
-        # Use MD5 hash if the key is too long (Redis key length limit is 512MB but shorter is better)
-        if len(cache_key) > 200:
-            import hashlib
-            cache_key = f"{key_prefix}:{hashlib.md5(cache_key.encode()).hexdigest()}"
-            
-        return cache_key
-    
-    def _get_cache_timeout(self, time_bucket):
-        """
-        Get cache timeout based on time_bucket parameter.
-        """
-        cache_config = getattr(settings, 'AGGREGATION_CACHE_CONFIG', {})
-        timeouts = cache_config.get('TIMEOUTS', {})
-        default_timeout = cache_config.get('DEFAULT_TIMEOUT', 3600)
-        
-        return timeouts.get(time_bucket, default_timeout)
+
     
     @extend_schema(
         parameters=[
@@ -121,7 +88,7 @@ class AggregationView(APIView):
         
         if not bypass_cache:
             # Generate cache key
-            cache_key = self._generate_cache_key(validated_data)
+            cache_key = generate_cache_key(validated_data)
             
             # Try to get cached data
             cached_data = cache.get(cache_key)
@@ -158,8 +125,8 @@ class AggregationView(APIView):
             
             # Cache the response if not bypassing cache
             if not bypass_cache:
-                cache_key = self._generate_cache_key(validated_data)
-                timeout = self._get_cache_timeout(actual_bucket)
+                cache_key = generate_cache_key(validated_data)
+                timeout = get_cache_timeout(actual_bucket)
                 cache.set(cache_key, response_data, timeout)
                 response_data['meta']['cached'] = True
                 response_data['meta']['cache_ttl'] = timeout

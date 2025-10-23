@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from django.utils import timezone
+from django.core.cache import cache
 
 from kpi.serializers.close_call_serializers import (
     CloseCallDetectionRequestSerializer,
@@ -10,6 +11,7 @@ from kpi.serializers.close_call_serializers import (
     SafetyKPISummarySerializer
 )
 from kpi.services.close_call_service import CloseCallKPI, SafetyEventKPIService
+from config.cache_utils import generate_cache_key, get_cache_timeout  # Import cache utilities
 
 
 class CloseCallKPIView(APIView):
@@ -61,6 +63,19 @@ class CloseCallKPIView(APIView):
                 type=bool,
                 default=True
             ),
+            OpenApiParameter(
+                name='time_bucket',
+                description='Time bucket for cache expiration',
+                type=str,
+                enum=['1m', '5m', '15m', '1h', '6h', '1d'],
+                default='1h'
+            ),
+            OpenApiParameter(
+                name='force_refresh',
+                description='Force refresh cache and recompute results',
+                type=bool,
+                default=False
+            ),
         ],
         examples=[
             OpenApiExample(
@@ -90,6 +105,24 @@ class CloseCallKPIView(APIView):
             # Extract parameters
             params = serializer.validated_data.copy()
             include_details = params.pop('include_details', True)
+            time_bucket = params.pop('time_bucket', '1h')
+            force_refresh = params.pop('force_refresh', False)
+            
+            # Generate cache key
+            cache_key = generate_cache_key(params)
+            
+            # Check cache first (unless force refresh)
+            if not force_refresh:
+                cached_result = cache.get(cache_key)
+                if cached_result is not None:
+                    # Add cache metadata to response
+                    cached_result['cache_metadata'] = {
+                        'cached': True,
+                        'cache_key': cache_key,
+                        'served_from_cache': True
+                    }
+                    response_serializer = CloseCallKPIResponseSerializer(cached_result)
+                    return Response(response_serializer.data)
             
             # Initialize KPI computer
             kpi_computer = CloseCallKPI(**params)
@@ -101,6 +134,15 @@ class CloseCallKPIView(APIView):
             results['parameters_used'] = params
             results['computed_at'] = timezone.now()
             results['include_details'] = include_details
+            results['cache_metadata'] = {
+                'cached': True,
+                'cache_key': cache_key,
+                'served_from_cache': False
+            }
+            
+            # Cache the results
+            cache_timeout = get_cache_timeout(time_bucket)
+            cache.set(cache_key, results, timeout=cache_timeout)
             
             # Serialize response
             response_serializer = CloseCallKPIResponseSerializer(results)
@@ -154,6 +196,19 @@ class SafetyKPIView(APIView):
                 type=bool,
                 default=False
             ),
+            OpenApiParameter(
+                name='time_bucket',
+                description='Time bucket for cache expiration',
+                type=str,
+                enum=['1m', '5m', '15m', '1h', '6h', '1d'],
+                default='1h'
+            ),
+            OpenApiParameter(
+                name='force_refresh',
+                description='Force refresh cache and recompute results',
+                type=bool,
+                default=False
+            ),
         ],
         responses=SafetyKPISummarySerializer
     )
@@ -166,6 +221,8 @@ class SafetyKPIView(APIView):
             from_time = request.GET.get('from_time')
             to_time = request.GET.get('to_time')
             zone = request.GET.get('zone')
+            time_bucket = request.GET.get('time_bucket', '1h')
+            force_refresh = request.GET.get('force_refresh', 'false').lower() == 'true'
             
             close_call_params = {
                 'distance_threshold': float(request.GET.get('close_call_distance', 2.0))
@@ -176,6 +233,33 @@ class SafetyKPIView(APIView):
                 'include_humans': request.GET.get('overspeed_include_humans', 'false').lower() == 'true'
             }
             
+            # Create parameters dict for cache key generation
+            cache_params = {
+                'from_time': from_time,
+                'to_time': to_time,
+                'zone': zone,
+                'time_bucket': time_bucket,
+                'close_call_distance': close_call_params['distance_threshold'],
+                'overspeed_threshold': overspeed_params['speed_threshold'],
+                'overspeed_include_humans': overspeed_params['include_humans']
+            }
+            
+            # Generate cache key
+            cache_key = generate_cache_key(cache_params)
+            
+            # Check cache first (unless force refresh)
+            if not force_refresh:
+                cached_result = cache.get(cache_key)
+                if cached_result is not None:
+                    # Add cache metadata to response
+                    cached_result['cache_metadata'] = {
+                        'cached': True,
+                        'cache_key': cache_key,
+                        'served_from_cache': True
+                    }
+                    response_serializer = SafetyKPISummarySerializer(cached_result)
+                    return Response(response_serializer.data)
+            
             # Compute all safety KPIs
             results = SafetyEventKPIService.compute_all_safety_kpis(
                 from_time=from_time,
@@ -184,6 +268,17 @@ class SafetyKPIView(APIView):
                 close_call_params=close_call_params,
                 overspeed_params=overspeed_params
             )
+            
+            # Add cache metadata
+            results['cache_metadata'] = {
+                'cached': True,
+                'cache_key': cache_key,
+                'served_from_cache': False
+            }
+            
+            # Cache the results
+            cache_timeout = get_cache_timeout(time_bucket)
+            cache.set(cache_key, results, timeout=cache_timeout)
             
             # Serialize response
             response_serializer = SafetyKPISummarySerializer(results)
