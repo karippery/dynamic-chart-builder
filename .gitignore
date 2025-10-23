@@ -62,3 +62,8 @@ Thumbs.db
 # Local config (if any)
 config.json
 local_settings.py
+
+#React
+node_modules
+npm-debug.log
+build
