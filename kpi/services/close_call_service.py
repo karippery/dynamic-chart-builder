@@ -143,7 +143,7 @@ class CloseCallKPI:
 class SafetyEventKPIService:
     @staticmethod
     def compute_overspeed_events(**kwargs):
-        qs = kpi_filters.get_overspeed_detections(**kwargs)
+        qs = kpi_filters.get_overspeed_detections_with_derived_speed(**kwargs)
         total = qs.count()
         by_class = list(qs.values("object_class").annotate(count=Count("id")))
         return {
