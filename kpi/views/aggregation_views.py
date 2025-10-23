@@ -4,13 +4,11 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.core.cache import cache
 from django.conf import settings
+from kpi.serializers.aggregation_serializer import AggregationRequestSerializer, AggregationSerializer
 
-from kpi.models import Detection
-from kpi.serializers import AggregationRequestSerializer, AggregationSerializer
-
-from .filters import DetectionFilter
+from ..filters import DetectionFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .services.aggregation_service import AggregationService
+from ..services.aggregation_service import AggregationService
 
 class AggregationView(APIView):
     """
