@@ -39,7 +39,6 @@ const AggregateBox: React.FC<AggregateBoxProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // Get icon and label based on metric AND object class
   const getMetricConfig = () => {

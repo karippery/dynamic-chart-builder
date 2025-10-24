@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Typography, Alert, Grid } from '@mui/material'; // Grid is Grid2 in v5.15+
+import { Box, Typography, Alert, Grid } from '@mui/material';
 import theme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
 import { useNavigation } from './hooks/useNavigation';
@@ -11,9 +11,11 @@ import NavBar from './components/NavBar';
 import KpiSummary from './components/SumCardProps';
 import DashboardFilter from './components/DashboardFilter';
 import { AggregationFilters } from './types/filters';
-import { filterApiService, FilterApiResponse } from './services/filterApi'; // Add this import
+import { filterApiService, FilterApiResponse } from './services/filterApi';
 import { useAggregateData } from './hooks/useAggregateData';
 import AggregateBox from './components/AggregateBox';
+import ChartVisualization from './components/ChartVisualization';
+import { ChartType } from './types/charts';
 
 function App() {
   const { 
@@ -25,24 +27,22 @@ function App() {
     handleNavigationChange,
     getPageContent 
   } = useNavigation();
-  
-
-
 
   const { kpiData, isLoading, error, refetch } = useSumCardData(refreshCount);
   
   const [filters, setFilters] = useState<AggregationFilters>({
     metric: 'count',
     entity: '',
-    group_by: [],
+    group_by: ['time_bucket'], // Default grouping for chart
     time_bucket: '1h',
   });
-  const {aggregateData, 
-  isLoading: isAggregateLoading, 
-  error: aggregateError } = useAggregateData(filters);
+
+  // Use aggregateData for BOTH aggregate box and default chart
+  const { aggregateData, isLoading: isAggregateLoading, error: aggregateError, refetch: refetchAggregate } = useAggregateData(filters);
 
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const [apiResponse, setApiResponse] = useState<FilterApiResponse | null>(null); // Add this state
+  const [apiResponse, setApiResponse] = useState<FilterApiResponse | null>(null);
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>('bar');
 
   const pageContent = getPageContent();
 
@@ -56,7 +56,7 @@ function App() {
     try {
       const response = await filterApiService.getFilteredData(appliedFilters);
       console.log('🎉 API Response:', response);
-      setApiResponse(response); // Store API response
+      setApiResponse(response);
     } catch (error) {
       console.error('❌ API Error:', error);
       setApiResponse(null);
@@ -67,17 +67,23 @@ function App() {
 
   const handleResetFilters = () => {
     console.log('Filters reset');
-    setApiResponse(null); // Clear API response on reset
+    setApiResponse(null);
   };
 
+  // Auto-refresh when toggleState (Live Mode) is enabled
   React.useEffect(() => {
     if (toggleState) {
       const interval = setInterval(() => {
         refetch();
+        refetchAggregate(); // Also refresh aggregate data
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [toggleState, refetch]);
+  }, [toggleState, refetch, refetchAggregate]);
+
+  // Determine which data to use for chart
+  // Use apiResponse when filters are applied, otherwise use aggregateData for default chart
+  const chartData = apiResponse || aggregateData;
 
   return (
     <ThemeProvider theme={theme}>
@@ -108,29 +114,21 @@ function App() {
           )}
           
           {activePage.path === '/main' && (
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               {/* Full-width KPI Summary */}
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 15 }}>
                 <KpiSummary data={kpiData} isLoading={isLoading} />
               </Grid>
 
-              {/* Nested Grid for Filters + Content */}
-              <Grid container spacing={3} sx={{ mt: 0 }}>
-                {/* Filters - Left Side */}
+              {/* Main Content Area - Side by Side */}
+              <Grid container spacing={2}>
+                {/* Filters - Left Column - Fixed height */}
                 <Grid size={{ xs: 12, md: 3 }}>
                   <Box 
                     sx={{ 
-                      width: { xs: '100%', md: 280 },
-                      position: { md: 'sticky' },
-                      top: { md: 100 },
-                      maxHeight: { md: 'calc(100vh - 140px)' },
-                      overflowY: { md: 'auto' },
-                      '&::-webkit-scrollbar': { width: '8px' },
-                      '&::-webkit-scrollbar-track': { backgroundColor: 'background.default' },
-                      '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'primary.light',
-                        borderRadius: '4px',
-                      },
+                      width: '100%',
+                      height: 'fit-content',
+                      minHeight: 500, // Match chart height
                     }}
                   >
                     <DashboardFilter
@@ -143,48 +141,31 @@ function App() {
                   </Box>
                 </Grid>
                 
-                {/* Main Content - Right Side */}
-                <Grid size={{ xs: 12, md: 9 }}>
-                  <Box sx={{ mt: 0 }}>
-                    {/* Aggregate Box - Added here */}
+                {/* Content - Right Column */}
+                <Grid size={{ xs: 10, md: 9 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {/* Aggregate Box */}
                     {aggregateData && aggregateData.series.length > 0 && (
                       <AggregateBox
-                          value={aggregateData.series[0].value}
-                          metric={filters.metric}
-                          bucket={aggregateData.meta?.bucket || filters.time_bucket}
-                          isLoading={isAggregateLoading}
-                          error={aggregateError}
-                          objectClass={filters.object_class && filters.object_class.length === 1 ? filters.object_class[0] : undefined}
-                        />
-                        )}
-                    <Typography variant="h6" gutterBottom>
-                      Filtered Data Visualization
-                    </Typography>
-                    <Box sx={{ p: 3, backgroundColor: 'background.default', borderRadius: 1, minHeight: 400 }}>
-                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                        Charts and visualizations based on current filters will be displayed here.
-                        Current filters: {JSON.stringify(filters, null, 2)}
-                      </Typography>
-                      
-                      {/* Add API Response Display */}
-                      {apiResponse && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="subtitle2" color="primary" gutterBottom>
-                            📊 API Response Data:
-                          </Typography>
-                          <Typography variant="body2" component="pre" sx={{ 
-                            backgroundColor: 'grey.100', 
-                            p: 2, 
-                            borderRadius: 1,
-                            overflow: 'auto',
-                            fontSize: '0.75rem',
-                            maxHeight: 200 
-                          }}>
-                            {JSON.stringify(apiResponse.series, null, 2)}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
+                        value={aggregateData.series[0].value}
+                        metric={filters.metric}
+                        bucket={aggregateData.meta?.bucket || filters.time_bucket}
+                        isLoading={isAggregateLoading}
+                        error={aggregateError}
+                        objectClass={filters.object_class && filters.object_class.length === 1 ? filters.object_class[0] : undefined}
+                      />
+                    )}
+                    
+                    {/* Chart Visualization */}
+                    <ChartVisualization
+                      chartData={chartData}
+                      groupByFields={filters.group_by}
+                      metric={filters.metric}
+                      isLoading={isFilterLoading || isAggregateLoading}
+                      error={aggregateError}
+                      onChartTypeChange={setSelectedChartType}
+                      selectedChartType={selectedChartType}
+                    />
                   </Box>
                 </Grid>
               </Grid>

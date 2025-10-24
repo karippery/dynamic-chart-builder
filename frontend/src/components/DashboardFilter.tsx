@@ -26,6 +26,24 @@ import {
 import { AggregationFilters, DateRange } from '../types/filters';
 import DateRangePicker from './DateRangePicker';
 
+const DEFAULT_FILTERS: AggregationFilters = {
+  metric: 'count',
+  entity: '',
+  group_by: ['time_bucket'],
+  time_bucket: '1h',
+  object_class: [],
+  vest: undefined,
+  min_speed: undefined,
+  max_speed: undefined,
+  min_x: undefined,
+  max_x: undefined,
+  min_y: undefined,
+  max_y: undefined,
+  zone: undefined,
+  from_time: undefined,
+  to_time: undefined,
+};
+
 interface DashboardFilterProps {
   filters: AggregationFilters;
   onFiltersChange: (filters: AggregationFilters) => void;
@@ -79,10 +97,16 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [localFilters, setLocalFilters] = useState<AggregationFilters>(filters);
 
-  // Sync local filters when props change
+  // Initialize with default filters if none provided
   useEffect(() => {
-    setLocalFilters(filters);
-  }, [filters]);
+    if (!filters.group_by || filters.group_by.length === 0) {
+      const initialFilters = { ...DEFAULT_FILTERS };
+      setLocalFilters(initialFilters);
+      onFiltersChange(initialFilters);
+    } else {
+      setLocalFilters(filters);
+    }
+  }, [filters, onFiltersChange]);
 
   const handleFilterChange = (key: keyof AggregationFilters, value: any) => {
     const updatedFilters = { ...localFilters, [key]: value };
@@ -155,9 +179,9 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
   };
 
   return (
-    <Card elevation={1} sx={{ mb: 3 }}>
+    <Card elevation={1} sx={{ mb: 3}}>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', minHeight: 50, alignItems: 'center', mb: 2 }}>
           <FilterIcon color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="h2">
             Dashboard Filters
@@ -432,3 +456,4 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
 };
 
 export default DashboardFilter;
+export { DEFAULT_FILTERS };

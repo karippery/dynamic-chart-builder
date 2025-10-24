@@ -1,3 +1,4 @@
+// frontend/src/hooks/useAggregateData.ts
 import { useState, useEffect, useCallback } from 'react';
 import { AggregationFilters } from '../types/filters';
 import { filterApiService, FilterApiResponse } from '../services/filterApi';
@@ -21,8 +22,15 @@ export const useAggregateData = (filters: AggregationFilters): UseAggregateDataR
     setError(null);
 
     try {
-      // Remove group_by from filters for aggregate box
-      const aggregateFilters = { ...filters, group_by: [] };
+      // For aggregate box: remove group_by to get single value
+      // For chart: keep group_by to get time series data
+      const aggregateFilters = { ...filters };
+      
+      // If no group_by is specified, use default time_bucket grouping for charts
+      if (aggregateFilters.group_by.length === 0) {
+        aggregateFilters.group_by = ['time_bucket'];
+      }
+      
       const response = await filterApiService.getFilteredData(aggregateFilters);
       setAggregateData(response);
     } catch (err) {
