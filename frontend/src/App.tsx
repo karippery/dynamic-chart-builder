@@ -1,13 +1,17 @@
-import React from 'react';
+// frontend/src/App.tsx
+import React, { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Typography, Alert } from '@mui/material';
+import { Box, Typography, Alert, Grid } from '@mui/material'; // Grid is Grid2 in v5.15+
 import theme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
 import { useNavigation } from './hooks/useNavigation';
 import { useSumCardData } from './hooks/useSumCardData';
 import NavBar from './components/NavBar';
-import KpiSummary from './components/SumCardProps'; // Import the KpiSummary component
+import KpiSummary from './components/SumCardProps';
+import DashboardFilter from './components/DashboardFilter';
+import { AggregationFilters } from './types/filters';
+import { filterApiService, FilterApiResponse } from './services/filterApi'; // Add this import
 
 function App() {
   const { 
@@ -22,15 +26,47 @@ function App() {
 
   const { kpiData, isLoading, error, refetch } = useSumCardData(refreshCount);
   
+  const [filters, setFilters] = useState<AggregationFilters>({
+    metric: 'count',
+    entity: '',
+    group_by: [],
+    time_bucket: '',
+  });
+
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [apiResponse, setApiResponse] = useState<FilterApiResponse | null>(null); // Add this state
+
   const pageContent = getPageContent();
 
-  // Auto-refresh when toggleState (Live Mode) is enabled
+  const handleFiltersChange = (newFilters: AggregationFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handleApplyFilters = async (appliedFilters: AggregationFilters) => {
+    setIsFilterLoading(true);
+    
+    try {
+      const response = await filterApiService.getFilteredData(appliedFilters);
+      console.log('🎉 API Response:', response);
+      setApiResponse(response); // Store API response
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      setApiResponse(null);
+    } finally {
+      setIsFilterLoading(false);
+    }
+  };
+
+  const handleResetFilters = () => {
+    console.log('Filters reset');
+    setApiResponse(null); // Clear API response on reset
+  };
+
   React.useEffect(() => {
     if (toggleState) {
       const interval = setInterval(() => {
         refetch();
-      }, 30000); // Refresh every 30 seconds in live mode
-
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [toggleState, refetch]);
@@ -49,7 +85,6 @@ function App() {
           activePath={activePage.path}
         />
         
-        {/* Main content area */}
         <Box component="main" sx={{ flex: 1, p: 3 }}>
           <Typography variant="h4" gutterBottom color="primary.main">
             {pageContent.title}
@@ -58,19 +93,86 @@ function App() {
             {pageContent.description}
           </Typography>
 
-          {/* Error Alert */}
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
           
-          {/* KPI Summary Section - Show ONLY on main page */}
           {activePage.path === '/main' && (
-            <KpiSummary data={kpiData} isLoading={isLoading} />
+            <Grid container spacing={3}>
+              {/* Full-width KPI Summary */}
+              <Grid size={{ xs: 12 }}>
+                <KpiSummary data={kpiData} isLoading={isLoading} />
+              </Grid>
+
+              {/* Nested Grid for Filters + Content */}
+              <Grid container spacing={3} sx={{ mt: 0 }}>
+                {/* Filters - Left Side */}
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Box 
+                    sx={{ 
+                      width: { xs: '100%', md: 280 },
+                      position: { md: 'sticky' },
+                      top: { md: 100 },
+                      maxHeight: { md: 'calc(100vh - 140px)' },
+                      overflowY: { md: 'auto' },
+                      '&::-webkit-scrollbar': { width: '8px' },
+                      '&::-webkit-scrollbar-track': { backgroundColor: 'background.default' },
+                      '&::-webkit-scrollbar-thumb': {
+                        backgroundColor: 'primary.light',
+                        borderRadius: '4px',
+                      },
+                    }}
+                  >
+                    <DashboardFilter
+                      filters={filters}
+                      onFiltersChange={handleFiltersChange}
+                      onApply={handleApplyFilters}
+                      onReset={handleResetFilters}
+                      isLoading={isFilterLoading}
+                    />
+                  </Box>
+                </Grid>
+                
+                {/* Main Content - Right Side */}
+                <Grid size={{ xs: 12, md: 9 }}>
+                  <Box sx={{ mt: 0 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Filtered Data Visualization
+                    </Typography>
+                    <Box sx={{ p: 3, backgroundColor: 'background.default', borderRadius: 1, minHeight: 400 }}>
+                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                        Charts and visualizations based on current filters will be displayed here.
+                        Current filters: {JSON.stringify(filters, null, 2)}
+                      </Typography>
+                      
+                      {/* Add API Response Display */}
+                      {apiResponse && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2" color="primary" gutterBottom>
+                            📊 API Response Data:
+                          </Typography>
+                          <Typography variant="body2" component="pre" sx={{ 
+                            backgroundColor: 'grey.100', 
+                            p: 2, 
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            fontSize: '0.75rem',
+                            maxHeight: 200 
+                          }}>
+                            {JSON.stringify(apiResponse.series, null, 2)}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
           )}
           
-          
+          {/* Other pages */}
           {activePage.path === '/close-call' && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="h5" gutterBottom>
