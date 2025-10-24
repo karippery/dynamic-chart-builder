@@ -12,6 +12,8 @@ import KpiSummary from './components/SumCardProps';
 import DashboardFilter from './components/DashboardFilter';
 import { AggregationFilters } from './types/filters';
 import { filterApiService, FilterApiResponse } from './services/filterApi'; // Add this import
+import { useAggregateData } from './hooks/useAggregateData';
+import AggregateBox from './components/AggregateBox';
 
 function App() {
   const { 
@@ -23,6 +25,9 @@ function App() {
     handleNavigationChange,
     getPageContent 
   } = useNavigation();
+  
+
+
 
   const { kpiData, isLoading, error, refetch } = useSumCardData(refreshCount);
   
@@ -30,8 +35,11 @@ function App() {
     metric: 'count',
     entity: '',
     group_by: [],
-    time_bucket: '',
+    time_bucket: '1h',
   });
+  const {aggregateData, 
+  isLoading: isAggregateLoading, 
+  error: aggregateError } = useAggregateData(filters);
 
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<FilterApiResponse | null>(null); // Add this state
@@ -138,6 +146,17 @@ function App() {
                 {/* Main Content - Right Side */}
                 <Grid size={{ xs: 12, md: 9 }}>
                   <Box sx={{ mt: 0 }}>
+                    {/* Aggregate Box - Added here */}
+                    {aggregateData && aggregateData.series.length > 0 && (
+                      <AggregateBox
+                          value={aggregateData.series[0].value}
+                          metric={filters.metric}
+                          bucket={aggregateData.meta?.bucket || filters.time_bucket}
+                          isLoading={isAggregateLoading}
+                          error={aggregateError}
+                          objectClass={filters.object_class && filters.object_class.length === 1 ? filters.object_class[0] : undefined}
+                        />
+                        )}
                     <Typography variant="h6" gutterBottom>
                       Filtered Data Visualization
                     </Typography>

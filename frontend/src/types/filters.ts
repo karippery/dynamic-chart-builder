@@ -4,7 +4,7 @@ export interface AggregationFilters {
   metric: 'count' | 'unique_ids' | 'avg_speed' | 'rate';
   entity: 'events' | 'objects' | '';
   group_by: string[];
-  time_bucket: '1m' | '5m' | '15m' | '1h' | '6h' | '1d' | '';
+  time_bucket: '1m' | '5m' | '15m' | '1h' | '6h' | '1d';
   
   // Filter Parameters
   object_class?: string[];

@@ -51,7 +51,6 @@ const GROUP_BY_OPTIONS = [
   { value: 'object_class', label: 'Object Class' },
   { value: 'zone', label: 'Zone' },
   { value: 'vest', label: 'Vest' },
-  { value: 'id', label: 'ID' },
 ];
 
 const TIME_BUCKET_OPTIONS = [
@@ -135,7 +134,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
       metric: 'count',
       entity: '',
       group_by: [],
-      time_bucket: '',
+      time_bucket: '1h',
     };
     setLocalFilters(resetFilters);
     onFiltersChange(resetFilters);
@@ -216,7 +215,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selected.length === 0 ? (
-                      <em>None</em>
+                      <em>1 Hour</em>
                     ) : (
                       selected.map((value) => (
                         <Chip 
@@ -246,9 +245,6 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                 label="Time Bucket"
                 onChange={(e) => handleFilterChange('time_bucket', e.target.value)}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
                 {TIME_BUCKET_OPTIONS.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
