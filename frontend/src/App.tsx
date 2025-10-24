@@ -16,6 +16,7 @@ import { useAggregateData } from './hooks/useAggregateData';
 import AggregateBox from './components/AggregateBox';
 import ChartVisualization from './components/ChartVisualization';
 import { ChartType } from './types/charts';
+import DashboardFileUpload from './components/DashboardFileUpload';
 
 function App() {
   const { 
@@ -99,7 +100,7 @@ function App() {
           activePath={activePage.path}
         />
         
-        <Box component="main" sx={{ flex: 1, p: 3 }}>
+        <Box component="main" sx={{ flex: 1, p: 4 }}>
           <Typography variant="h4" gutterBottom color="primary.main">
             {pageContent.title}
           </Typography>
@@ -114,7 +115,7 @@ function App() {
           )}
           
           {activePage.path === '/main' && (
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
               {/* Full-width KPI Summary */}
               <Grid size={{ xs: 15 }}>
                 <KpiSummary data={kpiData} isLoading={isLoading} />
@@ -131,6 +132,13 @@ function App() {
                       minHeight: 500, // Match chart height
                     }}
                   >
+                    <DashboardFileUpload 
+                        onUploadSuccess={(response) => {
+                          // Refresh KPI data after successful upload
+                          refetch();
+                          console.log('Upload successful, refreshing data...', response);
+                        }}
+                      />
                     <DashboardFilter
                       filters={filters}
                       onFiltersChange={handleFiltersChange}
