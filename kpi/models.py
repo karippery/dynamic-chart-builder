@@ -19,7 +19,6 @@ class Detection(models.Model):
 
     tracking_id = models.CharField(
         max_length=100,
-        unique=True,
         db_index=True,
         help_text="Unique tracking ID per object trajectory from CSV 'id' column."
     )

@@ -19,7 +19,6 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/d3": "^7.4.3",
     "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "chart.js": "^4.5.1",
@@ -62,5 +61,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1"
   }
 }

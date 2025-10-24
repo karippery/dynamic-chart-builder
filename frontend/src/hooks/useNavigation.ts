@@ -11,25 +11,20 @@ export const useNavigation = () => {
 
   const handleRefresh = useCallback(() => {
     setRefreshCount(prev => prev + 1);
-    console.log('Refreshing data...');
   }, []);
 
   const handleToggleChange = useCallback((value: boolean) => {
     setToggleState(value);
-    console.log('Toggle state changed to:', value);
   }, []);
 
   const handleNavigationChange = useCallback((item: NavigationItem) => {
     setActivePage(item);
-    console.log('Navigation changed to:', item.label);
   }, []);
 
   const getPageContent = useCallback(() => {
     switch (activePage.path) {
       case '/main':
         return {
-          title: 'Welcome to KPI Dashboard',
-          description: 'Your main content goes here...'
         };
       case '/close-call':
         return {
