@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { safetyApiService } from '../services/safetyApi';
 import { SafetyFilters, VestViolationsResponse, OverspeedEventsResponse } from '../types/safety';
 
@@ -16,7 +16,7 @@ export const useSafetyData = (filters: SafetyFilters = {}, refreshCount: number 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -34,11 +34,11 @@ export const useSafetyData = (filters: SafetyFilters = {}, refreshCount: number 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]); // Include filters as dependency since it's used inside
 
   useEffect(() => {
     fetchData();
-  }, [filters, refreshCount]);
+  }, [fetchData, refreshCount]); // Now fetchData is stable and can be included
 
   return {
     vestViolations,

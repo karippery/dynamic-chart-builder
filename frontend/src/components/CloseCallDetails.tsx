@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -47,6 +46,26 @@ const CloseCallDetails: React.FC<CloseCallDetailsProps> = ({
   const currentPage = paginationInfo?.page ? paginationInfo.page - 1 : page;
   const pageSize = paginationInfo?.page_size || rowsPerPage;
 
+  // Define handlers with useCallback to prevent unnecessary re-renders
+  const handleSeverityClick = useCallback((severity: string) => {
+    const newSeverity = selectedSeverity === severity ? null : severity;
+    setSelectedSeverity(newSeverity);
+    onSeverityFilter?.(newSeverity);
+  }, [selectedSeverity, onSeverityFilter]);
+
+  const handleVehicleClassClick = useCallback((vehicleClass: string) => {
+    const newVehicleClass = selectedVehicleClass === vehicleClass ? null : vehicleClass;
+    setSelectedVehicleClass(newVehicleClass);
+    onVehicleClassFilter?.(newVehicleClass);
+  }, [selectedVehicleClass, onVehicleClassFilter]);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedSeverity(null);
+    setSelectedVehicleClass(null);
+    onSeverityFilter?.(null);
+    onVehicleClassFilter?.(null);
+  }, [onSeverityFilter, onVehicleClassFilter]);
+
   // Table columns configuration
   const columns: TableColumn[] = useMemo(() => [
     { id: 'timestamp', label: 'Timestamp', sortable: true, width: 180 },
@@ -73,7 +92,12 @@ const CloseCallDetails: React.FC<CloseCallDetailsProps> = ({
     },
     { id: 'human_zone', label: 'Zone', sortable: true },
     { id: 'time_difference_ms', label: 'Time Diff (ms)', sortable: true, align: 'right', numeric: true, width: 120 },
-  ], [selectedSeverity, selectedVehicleClass]);
+  ], [
+    selectedSeverity, 
+    selectedVehicleClass, 
+    handleSeverityClick, 
+    handleVehicleClassClick
+  ]);
 
   // Filter calls based on severity and vehicle class
   const filteredCalls = useMemo(() => {
@@ -101,48 +125,29 @@ const CloseCallDetails: React.FC<CloseCallDetailsProps> = ({
   const displayRowsPerPage = paginationInfo ? pageSize : rowsPerPage;
   const displayTotalCount = paginationInfo ? totalCount : filteredCalls.length;
 
-  const handleSeverityClick = (severity: string) => {
-    const newSeverity = selectedSeverity === severity ? null : severity;
-    setSelectedSeverity(newSeverity);
-    onSeverityFilter?.(newSeverity);
-  };
-
-  const handleVehicleClassClick = (vehicleClass: string) => {
-    const newVehicleClass = selectedVehicleClass === vehicleClass ? null : vehicleClass;
-    setSelectedVehicleClass(newVehicleClass);
-    onVehicleClassFilter?.(newVehicleClass);
-  };
-
-  const handleClearFilters = () => {
-    setSelectedSeverity(null);
-    setSelectedVehicleClass(null);
-    onSeverityFilter?.(null);
-    onVehicleClassFilter?.(null);
-  };
-
-  const handleChangePage = (
+  const handleChangePage = useCallback((
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
     const pageForApi = newPage + 1;
     setPage(newPage);
     onPageChange?.(pageForApi, pageSize);
-  };
+  }, [onPageChange, pageSize]);
 
-  const handleChangeRowsPerPage = (
+  const handleChangeRowsPerPage = useCallback((
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
     onPageChange?.(1, newRowsPerPage);
-  };
+  }, [onPageChange]);
 
-  const handleSort = (property: string) => {
+  const handleSort = useCallback((property: string) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property as keyof CloseCallDetail);
-  };
+  }, [order, orderBy]);
 
   // Early return for no data
   if (!data?.close_calls || data.close_calls.length === 0) {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
 import {  ChartType } from '../../../types/charts';
 

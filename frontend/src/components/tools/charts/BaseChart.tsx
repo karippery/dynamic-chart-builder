@@ -10,7 +10,6 @@ import {
   Select,
   MenuItem,
   Alert,
-  useTheme,
 } from '@mui/material';
 import {
   Chart as ChartJS,
@@ -25,7 +24,6 @@ import {
   Legend,
   TimeScale,
 } from 'chart.js';
-import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { ChartData, ChartType } from '../../../types/charts';
 
@@ -73,7 +71,6 @@ export const BaseChart: React.FC<BaseChartProps> = ({
   children,
   metadata,
 }) => {
-  const theme = useTheme();
 
   if (error) {
     return (

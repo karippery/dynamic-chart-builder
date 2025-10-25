@@ -1,6 +1,5 @@
-// frontend\src\components\CloseCallSummaryCards.tsx
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, Typography } from '@mui/material';
 import { CloseCallResponse } from '../types/closeCall';
 import { Warning, Error, Place } from '@mui/icons-material';
 

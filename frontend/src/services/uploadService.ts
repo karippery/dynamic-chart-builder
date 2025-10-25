@@ -1,12 +1,7 @@
-
 import ApiService from './api';
 import { UploadResponse } from '../types/upload';
 
 class UploadService extends ApiService {
-  constructor() {
-    super();
-  }
-
   async uploadCSV(file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
@@ -75,4 +70,6 @@ class UploadService extends ApiService {
   }
 }
 
-export default new UploadService();
+// Assign instance to a variable before exporting
+const uploadService = new UploadService();
+export default uploadService;
