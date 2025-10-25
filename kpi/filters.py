@@ -76,20 +76,31 @@ def get_human_detections(from_time=None, to_time=None, zone=None):
     from_time = parse_if_str(from_time)
     to_time = parse_if_str(to_time)
 
-    filters = Q(object_class=Detection.ObjectClass.HUMAN)
-    if from_time:
-        filters &= Q(timestamp__gte=from_time)
-    if to_time:
-        filters &= Q(timestamp__lte=to_time)
-    if zone:
-        filters &= Q(zone=zone)
+    # DEBUG: Print what we're filtering for
+    print(f"DEBUG get_human_detections: from_time={from_time}, to_time={to_time}, zone={zone}")
 
-    return Detection.objects.filter(filters)
+    queryset = Detection.objects.filter(object_class=Detection.ObjectClass.HUMAN)
+    
+    if from_time:
+        queryset = queryset.filter(timestamp__gte=from_time)
+    if to_time:
+        queryset = queryset.filter(timestamp__lte=to_time)
+    if zone:
+        queryset = queryset.filter(zone=zone)
+
+    # DEBUG: Print count
+    count = queryset.count()
+    print(f"DEBUG get_human_detections: found {count} human detections")
+    
+    return queryset
 
 
 def get_vehicle_detections_in_range(start_time, end_time, zone=None, vehicle_class=None):
     """Return queryset for vehicle detections in a specific time range."""
-    filters = Q(
+    # DEBUG: Print what we're filtering for
+    print(f"DEBUG get_vehicle_detections_in_range: start_time={start_time}, end_time={end_time}, zone={zone}, vehicle_class={vehicle_class}")
+
+    queryset = Detection.objects.filter(
         object_class__in=[
             Detection.ObjectClass.VEHICLE,
             Detection.ObjectClass.PALLET_TRUCK,
@@ -99,12 +110,15 @@ def get_vehicle_detections_in_range(start_time, end_time, zone=None, vehicle_cla
     )
 
     if vehicle_class:
-        filters &= Q(object_class=vehicle_class)
+        queryset = queryset.filter(object_class=vehicle_class)
     if zone:
-        filters &= Q(zone=zone)
+        queryset = queryset.filter(zone=zone)
 
-    return Detection.objects.filter(filters)
-
+    # DEBUG: Print count
+    count = queryset.count()
+    print(f"DEBUG get_vehicle_detections_in_range: found {count} vehicle detections")
+    
+    return queryset
 
 # --------- Safety Event Filters --------- #
 
