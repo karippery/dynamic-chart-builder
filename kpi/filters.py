@@ -1,7 +1,8 @@
 from django_filters import rest_framework as filters
 from .models import Detection
 from django.db.models import Q
-from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+import datetime
 
 class DetectionFilter(filters.FilterSet):
     """
@@ -47,9 +48,24 @@ class DetectionFilter(filters.FilterSet):
 
 
 def parse_if_str(dt):
-    """Parse ISO datetime string safely."""
-    if dt and isinstance(dt, str):
-        return parse_datetime(dt)
+    """Parse ISO datetime string safely with timezone support."""
+    if dt is None:
+        return None
+    if isinstance(dt, str):
+        try:
+            # Handle ISO format with timezone
+            if 'Z' in dt:
+                dt = dt.replace('Z', '+00:00')
+            parsed = datetime.datetime.fromisoformat(dt)
+            
+            # Make it timezone-aware if it's naive
+            if parsed.tzinfo is None:
+                parsed = timezone.make_aware(parsed, timezone.utc)
+            
+            return parsed
+        except (ValueError, AttributeError) as e:
+            print(f"DEBUG: Failed to parse datetime '{dt}': {e}")
+            return None
     return dt
 
 

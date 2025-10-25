@@ -107,6 +107,9 @@ class CloseCallKPIView(APIView):
             include_details = params.pop('include_details', True)
             time_bucket = params.pop('time_bucket', '1h')
             force_refresh = params.pop('force_refresh', False)
+
+            if 'object_class' in params:
+                params['vehicle_class'] = params.pop('object_class')
             
             # Generate cache key
             cache_key = generate_cache_key(params)
