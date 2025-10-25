@@ -1,4 +1,4 @@
-// frontend/src/types/filters.ts
+
 export interface AggregationFilters {
   // Basic Parameters
   metric: 'count' | 'unique_ids' | 'avg_speed' | 'rate';

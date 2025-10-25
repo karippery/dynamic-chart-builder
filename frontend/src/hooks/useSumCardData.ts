@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KpiSummaryData } from '../types/sumcard';
+import { KpiSummaryData } from '../types/kpiCards';
 import { aggregateApiService } from '../services/aggregateApi';
 
 export const useSumCardData = (refreshCount: number) => { // Changed from useKpiData to useSumCardData

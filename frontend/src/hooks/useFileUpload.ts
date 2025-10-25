@@ -1,4 +1,4 @@
-// frontend\src\hooks\useFileUpload.ts
+
 import { useState, useCallback } from 'react';
 import { UploadState, UploadResponse } from '../types/upload';
 import uploadService from '../services/uploadService';

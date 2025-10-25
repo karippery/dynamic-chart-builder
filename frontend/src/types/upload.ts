@@ -1,4 +1,4 @@
-// frontend\src\types\upload.ts
+
 export interface UploadState {
   isUploading: boolean;
   progress: number;

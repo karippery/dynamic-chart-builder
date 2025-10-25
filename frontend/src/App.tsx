@@ -7,7 +7,6 @@ import GlobalStyles from './theme/GlobalStyles';
 import { useNavigation } from './hooks/useNavigation';
 import { useSumCardData } from './hooks/useSumCardData';
 import NavBar from './components/NavBar';
-import KpiSummary from './components/SumCardProps';
 import DashboardFilter from './components/DashboardFilter';
 import { AggregationFilters } from './types/filters';
 import { filterApiService, FilterApiResponse } from './services/filterApi';
@@ -23,6 +22,7 @@ import CloseCallKpiSummary from './components/CloseCallKpiSummary';
 import CloseCallDetails from './components/CloseCallDetails';
 import { getDefaultCloseCallFilters, getResetCloseCallFilters } from './utils/closeCallUtils';
 import { SafetyDashboard } from './components/SafetyDashboard';
+import KpiSummary from './components/tools/kpiCard/KpiSummary';
 
 function App() {
   const { 

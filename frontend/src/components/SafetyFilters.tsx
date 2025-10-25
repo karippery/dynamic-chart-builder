@@ -1,17 +1,9 @@
+
 import React from 'react';
-import {
-  Paper,
-  TextField,
-  Button,
-  Box,
-  Grid,
-  FormControlLabel,
-  Switch,
-  MenuItem,
-  Typography
-} from '@mui/material';
-import { FilterList, Refresh } from '@mui/icons-material';
+import { Grid } from '@mui/material';
 import { SafetyFiltersType } from '../types/safety';
+import BaseFilter from './tools/filterbox/BaseFilter';
+import { SelectFilter, SwitchFilter, TextFilter } from './tools/filterbox/FilterFields';
 
 interface SafetyFiltersProps {
   filters: SafetyFiltersType;
@@ -21,138 +13,95 @@ interface SafetyFiltersProps {
   isLoading?: boolean;
 }
 
-export const SafetyFilters: React.FC<SafetyFiltersProps> = ({
-  filters,
-  onFiltersChange,
-  onApply,
-  onReset,
-  isLoading = false
-}) => {
+const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
+  const { filters, onFiltersChange } = props;
+
   const handleFilterChange = (key: keyof SafetyFiltersType, value: any) => {
-    onFiltersChange({
-      ...filters,
-      [key]: value
-    });
+    onFiltersChange({ ...filters, [key]: value });
   };
 
-  const handleReset = () => {
-    onFiltersChange({
-      page: 1,
-      page_size: 10,
-      time_bucket: '1h'
-    });
-    onReset();
+  const resetFilters: SafetyFiltersType = {
+    page: 1,
+    page_size: 10,
+    time_bucket: '1h'
   };
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <FilterList color="primary" />
-        <Typography variant="h6">Filters</Typography>
-      </Box>
-
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Zone"
-            value={filters.zone || ''}
-            onChange={(e) => handleFilterChange('zone', e.target.value)}
-            placeholder="e.g., 9, 12"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Time Bucket"
-            value={filters.time_bucket || '1h'}
-            onChange={(e) => handleFilterChange('time_bucket', e.target.value)}
-            select
-          >
-            <MenuItem value="15m">15 minutes</MenuItem>
-            <MenuItem value="1h">1 hour</MenuItem>
-            <MenuItem value="4h">4 hours</MenuItem>
-            <MenuItem value="1d">1 day</MenuItem>
-          </TextField>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Speed Threshold (m/s)"
-            type="number"
-            value={filters.speed_threshold || 1.5}
-            onChange={(e) => handleFilterChange('speed_threshold', parseFloat(e.target.value))}
-            inputProps={{ step: 0.1, min: 0 }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Object Class"
-            value={filters.object_class || ''}
-            onChange={(e) => handleFilterChange('object_class', e.target.value)}
-            placeholder="e.g., AGV"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Page Size"
-            type="number"
-            value={filters.page_size || 10}
-            onChange={(e) => handleFilterChange('page_size', parseInt(e.target.value))}
-            inputProps={{ min: 1, max: 100 }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={filters.include_humans || false}
-                onChange={(e) => handleFilterChange('include_humans', e.target.checked)}
-              />
-            }
-            label="Include Humans in Overspeed Monitoring"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={filters.force_refresh || false}
-                onChange={(e) => handleFilterChange('force_refresh', e.target.checked)}
-              />
-            }
-            label="Force Refresh Cache"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <Box display="flex" gap={1} flexWrap="wrap">
-            <Button
-              variant="contained"
-              onClick={onApply}
-              disabled={isLoading}
-              startIcon={<Refresh />}
-            >
-              {isLoading ? 'Applying...' : 'Apply Filters'}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleReset}
-              disabled={isLoading}
-            >
-              Reset
-            </Button>
-          </Box>
-        </Grid>
+    <BaseFilter 
+      {...props}
+      onApply={() => props.onApply()}
+      title="Safety Filters"
+      resetFilters={resetFilters}
+    >
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <TextFilter
+          label="Zone"
+          value={filters.zone || ''}
+          onChange={(value) => handleFilterChange('zone', value)}
+          placeholder="e.g., 9, 12"
+        />
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <SelectFilter
+          label="Time Bucket"
+          value={filters.time_bucket || '1h'}
+          onChange={(value) => handleFilterChange('time_bucket', value)}
+          options={[
+            { value: '15m', label: '15 minutes' },
+            { value: '1h', label: '1 hour' },
+            { value: '4h', label: '4 hours' },
+            { value: '1d', label: '1 day' },
+          ]}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <TextFilter
+          label="Speed Threshold (m/s)"
+          value={filters.speed_threshold || 1.5}
+          onChange={(value) => handleFilterChange('speed_threshold', value)}
+          type="number"
+          inputProps={{ step: 0.1, min: 0 }}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <TextFilter
+          label="Object Class"
+          value={filters.object_class || ''}
+          onChange={(value) => handleFilterChange('object_class', value)}
+          placeholder="e.g., AGV"
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <TextFilter
+          label="Page Size"
+          value={filters.page_size || 10}
+          onChange={(value) => handleFilterChange('page_size', value)}
+          type="number"
+          inputProps={{ min: 1, max: 100 }}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <SwitchFilter
+          label="Include Humans in Overspeed Monitoring"
+          checked={filters.include_humans || false}
+          onChange={(checked) => handleFilterChange('include_humans', checked)}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <SwitchFilter
+          label="Force Refresh Cache"
+          checked={filters.force_refresh || false}
+          onChange={(checked) => handleFilterChange('force_refresh', checked)}
+        />
+      </Grid>
+    </BaseFilter>
   );
 };
+
+export { SafetyFilters };

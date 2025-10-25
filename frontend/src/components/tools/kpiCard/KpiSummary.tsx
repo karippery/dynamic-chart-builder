@@ -1,14 +1,12 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import {
   People as PeopleIcon,
   DirectionsCar as VehicleIcon,
   Security as SecurityIcon,
   Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
-import { KpiSummaryData, KpiCardProps } from '../types/sumcard';
-import SumCard from './SumCard';
+import { KpiSummaryData, BaseKpiCardProps} from '../../../types/kpiCards';
+import KpiCardGrid from './KpiCardGrid';
 
 interface KpiSummaryProps {
   data: KpiSummaryData;
@@ -17,10 +15,9 @@ interface KpiSummaryProps {
 
 const KpiSummary: React.FC<KpiSummaryProps> = ({ data, isLoading = false }) => {
   const { totalCount, humanCount, vehicleCount, vestViolationCount } = data;
-  const violationRate =
-    totalCount > 0 ? (vestViolationCount / humanCount) * 100 : 0;
+  const violationRate = totalCount > 0 ? (vestViolationCount / humanCount) * 100 : 0;
 
-  const kpiCards: KpiCardProps[] = [
+  const kpiCards: BaseKpiCardProps[] = [
     {
       title: 'Total Detections',
       value: totalCount,
@@ -52,30 +49,11 @@ const KpiSummary: React.FC<KpiSummaryProps> = ({ data, isLoading = false }) => {
   ];
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="h5"
-        component="h2"
-        gutterBottom
-        sx={{ fontWeight: 600, mb: 3 }}
-      >
-      </Typography>
-
-      <Grid container spacing={3}>
-        {kpiCards.map((card, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <SumCard
-              title={card.title}
-              value={card.value}
-              subtitle={card.subtitle}
-              icon={card.icon}
-              color={card.color}
-              isLoading={isLoading}
-            />
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+    <KpiCardGrid
+      cards={kpiCards}
+      isLoading={isLoading}
+      title="Detection Summary"
+    />
   );
 };
 

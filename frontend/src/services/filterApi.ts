@@ -1,4 +1,4 @@
-// frontend/src/services/filterApi.ts
+
 import ApiService from './api';
 import { AggregationFilters } from '../types/filters';
 

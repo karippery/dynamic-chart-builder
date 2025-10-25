@@ -1,4 +1,4 @@
-// frontend/src/components/DateRangePicker.tsx
+
 import React from 'react';
 import {
   Box,
@@ -9,7 +9,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { DateRange } from '../types/filters';
+import { DateRange } from '../../types/filters';
 
 interface DateRangePickerProps {
   dateRange: DateRange;

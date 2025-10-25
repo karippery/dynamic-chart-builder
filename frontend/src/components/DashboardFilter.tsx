@@ -1,48 +1,18 @@
-// frontend/src/components/DashboardFilter.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  OutlinedInput,
-  SelectChangeEvent,
-  TextField,
   Grid,
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Typography,
 } from '@mui/material';
-import {
-  FilterList as FilterIcon,
-  ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import DateRangePicker from './tools/DateRangePicker';
 import { AggregationFilters, DateRange } from '../types/filters';
-import DateRangePicker from './DateRangePicker';
-
-const DEFAULT_FILTERS: AggregationFilters = {
-  metric: 'count',
-  entity: '',
-  group_by: ['time_bucket'],
-  time_bucket: '1h',
-  object_class: [],
-  vest: undefined,
-  min_speed: undefined,
-  max_speed: undefined,
-  min_x: undefined,
-  max_x: undefined,
-  min_y: undefined,
-  max_y: undefined,
-  zone: undefined,
-  from_time: undefined,
-  to_time: undefined,
-};
+import { DEFAULT_FILTERS } from './DashboardFilterConstants';
+import BaseFilter from './tools/filterbox/BaseFilter';
+import { MultiSelectFilter, SelectFilter, TextFilter } from './tools/filterbox/FilterFields';
 
 interface DashboardFilterProps {
   filters: AggregationFilters;
@@ -52,52 +22,11 @@ interface DashboardFilterProps {
   isLoading?: boolean;
 }
 
-const METRIC_OPTIONS = [
-  { value: 'count', label: 'Count' },
-  { value: 'unique_ids', label: 'Unique Objects' },
-  { value: 'avg_speed', label: 'Average Speed' },
-  { value: 'rate', label: 'Rate' },
-];
-
-const ENTITY_OPTIONS = [
-  { value: 'events', label: 'Events' },
-  { value: 'objects', label: 'Objects' },
-];
-
-const GROUP_BY_OPTIONS = [
-  { value: 'time_bucket', label: 'Time Bucket' },
-  { value: 'object_class', label: 'Object Class' },
-  { value: 'zone', label: 'Zone' },
-  { value: 'vest', label: 'Vest' },
-];
-
-const TIME_BUCKET_OPTIONS = [
-  { value: '1m', label: '1 Minute' },
-  { value: '5m', label: '5 Minutes' },
-  { value: '15m', label: '15 Minutes' },
-  { value: '1h', label: '1 Hour' },
-  { value: '6h', label: '6 Hours' },
-  { value: '1d', label: '1 Day' },
-];
-
-const OBJECT_CLASS_OPTIONS = [
-  { value: 'human', label: 'Human' },
-  { value: 'vehicle', label: 'Vehicle' },
-  { value: 'pallet_truck', label: 'Pallet Truck' },
-  { value: 'agv', label: 'AGV' },
-];
-
-const DashboardFilter: React.FC<DashboardFilterProps> = ({
-  filters,
-  onFiltersChange,
-  onApply,
-  onReset,
-  isLoading = false,
-}) => {
+const DashboardFilter: React.FC<DashboardFilterProps> = (props) => {
+  const { filters, onFiltersChange } = props;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [localFilters, setLocalFilters] = useState<AggregationFilters>(filters);
 
-  // Initialize with default filters if none provided
   useEffect(() => {
     if (!filters.group_by || filters.group_by.length === 0) {
       const initialFilters = { ...DEFAULT_FILTERS };
@@ -110,15 +39,6 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
 
   const handleFilterChange = (key: keyof AggregationFilters, value: any) => {
     const updatedFilters = { ...localFilters, [key]: value };
-    setLocalFilters(updatedFilters);
-  };
-
-  const handleMultiSelectChange = (key: keyof AggregationFilters, event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value;
-    const updatedFilters = { 
-      ...localFilters, 
-      [key]: typeof value === 'string' ? value.split(',') : value 
-    };
     setLocalFilters(updatedFilters);
   };
 
@@ -148,24 +68,6 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
     setLocalFilters(updatedFilters);
   };
 
-  const handleApply = () => {
-    onFiltersChange(localFilters);
-    onApply(localFilters);
-  };
-
-  const handleReset = () => {
-    const resetFilters: AggregationFilters = {
-      metric: 'count',
-      entity: '',
-      group_by: [],
-      time_bucket: '1h',
-    };
-    setLocalFilters(resetFilters);
-    onFiltersChange(resetFilters);
-    onReset();
-    console.log('Filters Reset:', resetFilters);
-  };
-
   const getCurrentDateRange = (): DateRange => {
     const startDate = localFilters.from_time ? new Date(localFilters.from_time) : null;
     const endDate = localFilters.to_time ? new Date(localFilters.to_time) : null;
@@ -179,279 +81,165 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
   };
 
   return (
-    <Card elevation={1} sx={{ mb: 3}}>
-      <CardContent>
-        <Box sx={{ display: 'flex', minHeight: 50, alignItems: 'center', mb: 2 }}>
-          <FilterIcon color="primary" sx={{ mr: 1 }} />
-          <Typography variant="h6" component="h2">
-            Dashboard Filters
-          </Typography>
-        </Box>
+    <BaseFilter 
+      {...props} 
+      filters={localFilters}
+      onFiltersChange={setLocalFilters}
+      title="Dashboard Filters" 
+      resetFilters={DEFAULT_FILTERS}
+    >
+      {/* Metric & Entity */}
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <SelectFilter
+          label="Metric *"
+          value={localFilters.metric}
+          onChange={(value) => handleFilterChange('metric', value)}
+          options={[
+            { value: 'count', label: 'Count' },
+            { value: 'unique_ids', label: 'Unique Objects' },
+            { value: 'avg_speed', label: 'Average Speed' },
+            { value: 'rate', label: 'Rate' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-        <Grid container spacing={2}>
-          {/* Row 1: Metric & Entity */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Metric *</InputLabel>
-              <Select
-                value={localFilters.metric}
-                label="Metric *"
-                onChange={(e) => handleFilterChange('metric', e.target.value)}
-              >
-                {METRIC_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <SelectFilter
+          label="Entity"
+          value={localFilters.entity}
+          onChange={(value) => handleFilterChange('entity', value)}
+          options={[
+            { value: '', label: 'None' },
+            { value: 'events', label: 'Events' },
+            { value: 'objects', label: 'Objects' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Entity</InputLabel>
-              <Select
-                value={localFilters.entity}
-                label="Entity"
-                onChange={(e) => handleFilterChange('entity', e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {ENTITY_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Group By & Time Bucket */}
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <MultiSelectFilter
+          label="Group By"
+          value={localFilters.group_by}
+          onChange={(value) => handleFilterChange('group_by', value)}
+          options={[
+            { value: 'time_bucket', label: 'Time Bucket' },
+            { value: 'object_class', label: 'Object Class' },
+            { value: 'zone', label: 'Zone' },
+            { value: 'vest', label: 'Vest' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-          {/* Row 2: Group By & Time Bucket */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Group By</InputLabel>
-              <Select
-                multiple
-                value={localFilters.group_by}
-                onChange={(e) => handleMultiSelectChange('group_by', e)}
-                input={<OutlinedInput label="Group By" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.length === 0 ? (
-                      <em>1 Hour</em>
-                    ) : (
-                      selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={GROUP_BY_OPTIONS.find(opt => opt.value === value)?.label || value}
-                          size="small" 
-                        />
-                      ))
-                    )}
-                  </Box>
-                )}
-              >
-                {GROUP_BY_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <SelectFilter
+          label="Time Bucket"
+          value={localFilters.time_bucket}
+          onChange={(value) => handleFilterChange('time_bucket', value)}
+          options={[
+            { value: '1m', label: '1 Minute' },
+            { value: '5m', label: '5 Minutes' },
+            { value: '15m', label: '15 Minutes' },
+            { value: '1h', label: '1 Hour' },
+            { value: '6h', label: '6 Hours' },
+            { value: '1d', label: '1 Day' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Time Bucket</InputLabel>
-              <Select
-                value={localFilters.time_bucket}
-                label="Time Bucket"
-                onChange={(e) => handleFilterChange('time_bucket', e.target.value)}
-              >
-                {TIME_BUCKET_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Object Class */}
+      <Grid size={{ xs: 12 }}>
+        <MultiSelectFilter
+          label="Object Class"
+          value={localFilters.object_class || []}
+          onChange={(value) => handleFilterChange('object_class', value)}
+          options={[
+            { value: 'human', label: 'Human' },
+            { value: 'vehicle', label: 'Vehicle' },
+            { value: 'pallet_truck', label: 'Pallet Truck' },
+            { value: 'agv', label: 'AGV' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-          {/* Row 3: Object Class (Full width) */}
-          <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Object Class</InputLabel>
-              <Select
-                multiple
-                value={localFilters.object_class || []}
-                onChange={(e) => handleMultiSelectChange('object_class', e)}
-                input={<OutlinedInput label="Object Class" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.length === 0 ? (
-                      <em>None</em>
-                    ) : (
-                      selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={OBJECT_CLASS_OPTIONS.find(opt => opt.value === value)?.label || value}
-                          size="small" 
-                        />
-                      ))
-                    )}
-                  </Box>
-                )}
-              >
-                {OBJECT_CLASS_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Date Range Picker */}
+      <Grid size={{ xs: 12 }}>
+        <DateRangePicker
+          dateRange={getCurrentDateRange()}
+          onChange={handleDateRangeChange}
+        />
+      </Grid>
 
-          {/* Row 4: Date Range Picker (Full width) */}
-          <Grid size={{ xs: 12 }}>
-            <DateRangePicker
-              dateRange={getCurrentDateRange()}
-              onChange={handleDateRangeChange}
-            />
-          </Grid>
+      {/* Safety Vest */}
+      <Grid size={{ xs: 12 }}>
+        <SelectFilter
+          label="Safety Vest"
+          value={localFilters.vest === undefined ? '' : localFilters.vest.toString()}
+          onChange={(value) => {
+            if (value === '') {
+              handleFilterChange('vest', undefined);
+            } else {
+              handleFilterChange('vest', value === 'true');
+            }
+          }}
+          options={[
+            { value: '', label: 'Not Specified' },
+            { value: 'true', label: 'Required' },
+            { value: 'false', label: 'Not Required' },
+          ]}
+          size="small"
+        />
+      </Grid>
 
-          {/* Row 5: Safety Vest (Full width) */}
-          <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Safety Vest</InputLabel>
-              <Select
-                value={localFilters.vest === undefined ? '' : localFilters.vest.toString()}
-                label="Safety Vest"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '') {
-                    handleFilterChange('vest', undefined);
-                  } else {
-                    handleFilterChange('vest', value === 'true');
-                  }
-                }}
-              >
-                <MenuItem value="">
-                  <em>Not Specified</em>
-                </MenuItem>
-                <MenuItem value="true">Required</MenuItem>
-                <MenuItem value="false">Not Required</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        {/* Advanced Filters Accordion */}
+      {/* Advanced Filters Accordion */}
+      <Grid size={{ xs: 12 }}>
         <Accordion 
           expanded={showAdvanced}
           onChange={() => setShowAdvanced(!showAdvanced)}
-          sx={{ mt: 2 }}
+          sx={{ mt: 1 }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">
-              Advanced Filters
-            </Typography>
+            <Typography variant="subtitle1">Advanced Filters</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Min Speed"
-                  value={localFilters.min_speed || ''}
-                  onChange={(e) => handleFilterChange('min_speed', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Max Speed"
-                  value={localFilters.max_speed || ''}
-                  onChange={(e) => handleFilterChange('max_speed', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Min X"
-                  value={localFilters.min_x || ''}
-                  onChange={(e) => handleFilterChange('min_x', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Max X"
-                  value={localFilters.max_x || ''}
-                  onChange={(e) => handleFilterChange('max_x', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Min Y"
-                  value={localFilters.min_y || ''}
-                  onChange={(e) => handleFilterChange('min_y', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Max Y"
-                  value={localFilters.max_y || ''}
-                  onChange={(e) => handleFilterChange('max_y', e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
-              </Grid>
+              {[
+                { label: 'Min Speed', key: 'min_speed' },
+                { label: 'Max Speed', key: 'max_speed' },
+                { label: 'Min X', key: 'min_x' },
+                { label: 'Max X', key: 'max_x' },
+                { label: 'Min Y', key: 'min_y' },
+                { label: 'Max Y', key: 'max_y' },
+              ].map(({ label, key }) => (
+                <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <TextFilter
+                    label={label}
+                    value={localFilters[key as keyof AggregationFilters] || ''}
+                    onChange={(value) => handleFilterChange(key as keyof AggregationFilters, value ? parseFloat(value) : undefined)}
+                    type="number"
+                    size="small"
+                  />
+                </Grid>
+              ))}
+              
               <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  size="small"
+                <TextFilter
                   label="Zone"
                   value={localFilters.zone || ''}
-                  onChange={(e) => handleFilterChange('zone', e.target.value || undefined)}
+                  onChange={(value) => handleFilterChange('zone', value || undefined)}
+                  size="small"
                 />
               </Grid>
             </Grid>
           </AccordionDetails>
         </Accordion>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 3, justifyContent: 'flex-end' }}>
-          <Button
-            variant="outlined"
-            onClick={handleReset}
-            disabled={isLoading}
-          >
-            Reset
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleApply}
-            disabled={isLoading}
-            startIcon={<FilterIcon />}
-          >
-            {isLoading ? 'Applying...' : 'Apply Filters'}
-          </Button>
-        </Box>
-      </CardContent>
-    </Card>
+      </Grid>
+    </BaseFilter>
   );
 };
 

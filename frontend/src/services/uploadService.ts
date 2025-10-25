@@ -1,4 +1,4 @@
-// frontend\src\services\uploadService.ts
+
 import ApiService from './api';
 import { UploadResponse } from '../types/upload';
 

@@ -1,26 +1,24 @@
 import React from 'react';
-import { Grid } from '@mui/material';
-import SumCard from './SumCard';
-import { CloseCallKpiData } from '../types/closeCall';
 import { 
   AlertTriangle, 
-  TrendingUp, 
   Users, 
   Car,
   AlertCircle,
   Activity
 } from 'lucide-react';
+import { CloseCallKpiData } from '../types/kpiCards';
+import KpiCardGrid from './tools/kpiCard/KpiCardGrid';
+
 
 interface CloseCallKpiSummaryProps {
   data: CloseCallKpiData | null;
   isLoading?: boolean;
 }
 
-// Define valid color types
-type ValidColor = 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
-
-const CloseCallKpiSummary: React.FC<CloseCallKpiSummaryProps> = ({ data, isLoading = false }) => {
-
+const CloseCallKpiSummary: React.FC<CloseCallKpiSummaryProps> = ({ 
+  data, 
+  isLoading = false 
+}) => {
   const kpiCards = [
     {
       title: 'Total Close Calls',
@@ -64,31 +62,15 @@ const CloseCallKpiSummary: React.FC<CloseCallKpiSummaryProps> = ({ data, isLoadi
       icon: <Car size={24} />,
       color: 'secondary' as const,
     },
-    // {
-    //   title: 'Detection Rate',
-    //   value: data?.detectionRate || 0,
-    //   subtitle: 'Close calls per human detection',
-    //   icon: <TrendingUp size={24} />,
-    //   color: (data?.detectionRate && data.detectionRate > 5 ? 'error' : 'success') as ValidColor,
-    //   formatValue: (val: number) => `${val.toFixed(2)}`,
-    // },
   ];
 
   return (
-    <Grid container spacing={2}>
-      {kpiCards.map((card, index) => (
-        <Grid key={index} size={{ xs: 7, sm: 5, md: 3, lg: 2 }}>
-          <SumCard
-            title={card.title}
-            value={card.value}
-            subtitle={card.subtitle}
-            icon={card.icon}
-            color={card.color}
-            isLoading={isLoading}
-          />
-        </Grid>
-      ))}
-    </Grid>
+    <KpiCardGrid
+      cards={kpiCards}
+      isLoading={isLoading}
+      title="Close Call Summary"
+      gridConfig={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+    />
   );
 };
 

@@ -1,4 +1,4 @@
-// frontend\src\components\FileUpload.tsx
+
 import React, { useCallback, useRef } from 'react';
 import {
   Box,
@@ -16,14 +16,13 @@ import {
   Close as CloseIcon,
   InsertDriveFile as FileIcon,
 } from '@mui/icons-material';
-import { useFileUpload } from '../hooks/useFileUpload';
-import { FileUploadProps } from '../types/upload';
+import { useFileUpload } from '../../hooks/useFileUpload';
+import { FileUploadProps } from '../../types/upload';
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,
   onUploadError,
   acceptedFileTypes = '.csv',
-  maxFileSize = 10 * 1024 * 1024, // 10MB
 }) => {
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);

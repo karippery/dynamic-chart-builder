@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
-import { Warning, Speed, People, LocationOn } from '@mui/icons-material';
 
 interface SafetySummaryCardProps {
   title: string;

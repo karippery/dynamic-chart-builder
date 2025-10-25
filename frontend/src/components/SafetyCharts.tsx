@@ -1,27 +1,11 @@
-import React from 'react';
-import { Paper, Typography, Box, Grid } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import { OverspeedEventsResponse, VestViolationsResponse } from '../types/safety';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import React from 'react';
+import { Grid } from '@mui/material';
+import { BaseChart } from './tools/charts/BaseChart';
+import { ChartRenderer } from './tools/charts/ChartRenderer';
+import { useChartOptions } from '../hooks/useChartOptions';
+import { OverspeedEventsResponse, VestViolationsResponse } from '../types/safety';
+import { ChartType } from '../types/charts';
 
 interface SafetyChartsProps {
   vestViolations: VestViolationsResponse | null;
@@ -34,8 +18,14 @@ export const SafetyCharts: React.FC<SafetyChartsProps> = ({
   overspeedEvents,
   isLoading = false
 }) => {
+  const chartOptions = useChartOptions({
+    groupByFields: ['zone'],
+    metric: 'count',
+    isTimeBased: false,
+  });
+
   // Prepare data for violations by zone chart
-  const violationsByZoneData = {
+  const violationsByZoneData = React.useMemo(() => ({
     labels: vestViolations?.by_zone.map(item => `Zone ${item.zone}`) || [],
     datasets: [
       {
@@ -46,10 +36,10 @@ export const SafetyCharts: React.FC<SafetyChartsProps> = ({
         borderWidth: 1,
       },
     ],
-  };
+  }), [vestViolations]);
 
   // Prepare data for overspeed events by object class
-  const overspeedByClassData = {
+  const overspeedByClassData = React.useMemo(() => ({
     labels: overspeedEvents?.by_object_class.map(item => item.object_class) || [],
     datasets: [
       {
@@ -70,56 +60,70 @@ export const SafetyCharts: React.FC<SafetyChartsProps> = ({
         borderWidth: 1,
       },
     ],
-  };
+  }), [overspeedEvents]);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-    },
-  };
+  const violationsChartData = vestViolations ? {
+    series: vestViolations.by_zone.map(item => ({
+      zone: item.zone,
+      value: item.count
+    })),
+    meta: {
+      metric: 'count',
+      bucket: 'zone',
+      cached: false
+    }
+  } as any : null;
 
-  if (isLoading) {
-    return (
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography>Loading charts...</Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography>Loading charts...</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-    );
-  }
+  const overspeedChartData = overspeedEvents ? {
+    series: overspeedEvents.by_object_class.map(item => ({
+      class: item.object_class,
+      value: item.count
+    })),
+    meta: {
+      metric: 'count',
+      bucket: 'object_class',
+      cached: false
+    }
+  } as any : null;
 
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Vest Violations by Zone
-          </Typography>
-          <Box sx={{ height: 300 }}>
-            <Bar data={violationsByZoneData} options={chartOptions} />
-          </Box>
-        </Paper>
+        <BaseChart
+          title="Vest Violations by Zone"
+          chartData={violationsChartData}
+          isLoading={isLoading}
+          availableChartTypes={['bar'] as ChartType[]}
+          height={300}
+        >
+          {violationsByZoneData && (
+            <ChartRenderer
+              chartType="bar"
+              data={violationsByZoneData}
+              options={chartOptions}
+              height={300}
+            />
+          )}
+        </BaseChart>
       </Grid>
       
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Overspeed Events by Object Class
-          </Typography>
-          <Box sx={{ height: 300, display: 'flex', justifyContent: 'center' }}>
-            <Doughnut data={overspeedByClassData} options={chartOptions} />
-          </Box>
-        </Paper>
+        <BaseChart
+          title="Overspeed Events by Object Class"
+          chartData={overspeedChartData}
+          isLoading={isLoading}
+          availableChartTypes={['doughnut'] as ChartType[]}
+          height={300}
+        >
+          {overspeedByClassData && (
+            <ChartRenderer
+              chartType="doughnut"
+              data={overspeedByClassData}
+              options={chartOptions}
+              height={300}
+            />
+          )}
+        </BaseChart>
       </Grid>
     </Grid>
   );

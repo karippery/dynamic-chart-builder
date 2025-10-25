@@ -1,17 +1,15 @@
+
 import React from 'react';
 import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
   Chip,
-  Box
+  Typography,
+  TableBody,
+  TableRow,
+  TableCell,
 } from '@mui/material';
 import { OverspeedEvent, VestViolation } from '../types/safety';
+import { BaseTable } from './tools/tables/BaseTable';
+import { TableHeader, TableColumn } from './tools/tables/TableHeader';
 
 interface SafetyDataTableProps {
   title: string;
@@ -30,99 +28,79 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
     return new Date(dateString).toLocaleString();
   };
 
-  if (isLoading) {
-    return (
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
-        <Box display="flex" justifyContent="center" p={3}>
-          <Typography color="text.secondary">Loading...</Typography>
-        </Box>
-      </Paper>
-    );
-  }
+  // Define columns based on table type
+  const columns: TableColumn[] = React.useMemo(() => {
+    const baseColumns: TableColumn[] = [
+      { id: 'timestamp', label: 'Timestamp', width: 180 },
+      { id: 'tracking_id', label: 'Tracking ID' },
+      { id: 'zone', label: 'Zone' },
+      { id: 'location', label: 'Location' },
+    ];
 
-  if (!data || data.length === 0) {
-    return (
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
-        <Box display="flex" justifyContent="center" p={3}>
-          <Typography color="text.secondary">No data available</Typography>
-        </Box>
-      </Paper>
-    );
-  }
+    if (type === 'overspeed-events') {
+      return [
+        ...baseColumns,
+        { id: 'object_class', label: 'Object Class' },
+        { id: 'speed', label: 'Speed' },
+      ];
+    }
+
+    return baseColumns;
+  }, [type]);
 
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer>
-        <Typography variant="h6" sx={{ p: 2, pb: 1 }}>
-          {title}
-        </Typography>
-        <Table stickyHeader aria-label={title}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Timestamp</TableCell>
-              <TableCell>Tracking ID</TableCell>
-              <TableCell>Zone</TableCell>
-              <TableCell>Location</TableCell>
-              {type === 'overspeed-events' && (
-                <>
-                  <TableCell>Object Class</TableCell>
-                  <TableCell>Speed</TableCell>
-                </>
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((item) => (
-              <TableRow key={item.id} hover>
-                <TableCell>{formatDate(item.timestamp)}</TableCell>
+    <BaseTable
+      title={title}
+      data={data}
+      isLoading={isLoading}
+      emptyMessage="No data available"
+      height={400}
+    >
+      <TableHeader columns={columns} />
+      <TableBody>
+        {data.map((item) => (
+          <TableRow key={item.id} hover>
+            <TableCell>{formatDate(item.timestamp)}</TableCell>
+            <TableCell>
+              <Chip 
+                label={item.tracking_id} 
+                size="small" 
+                variant="outlined"
+              />
+            </TableCell>
+            <TableCell>
+              <Chip 
+                label={`Zone ${item.zone}`} 
+                color="primary" 
+                size="small"
+              />
+            </TableCell>
+            <TableCell>
+              <Typography variant="body2">
+                ({item.x.toFixed(1)}, {item.y.toFixed(1)})
+              </Typography>
+            </TableCell>
+            {type === 'overspeed-events' && (
+              <>
                 <TableCell>
                   <Chip 
-                    label={item.tracking_id} 
-                    size="small" 
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={`Zone ${item.zone}`} 
-                    color="primary" 
+                    label={(item as OverspeedEvent).object_class} 
+                    color="secondary" 
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    ({item.x.toFixed(1)}, {item.y.toFixed(1)})
-                  </Typography>
+                  <Chip 
+                    label={`${(item as OverspeedEvent).speed}m/s`} 
+                    color="error" 
+                    size="small"
+                  />
                 </TableCell>
-                {type === 'overspeed-events' && (
-                  <>
-                    <TableCell>
-                      <Chip 
-                        label={(item as OverspeedEvent).object_class} 
-                        color="secondary" 
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={`${(item as OverspeedEvent).speed}m/s`} 
-                        color="error" 
-                        size="small"
-                      />
-                    </TableCell>
-                  </>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
+              </>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+    </BaseTable>
   );
 };

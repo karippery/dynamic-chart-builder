@@ -1,24 +1,10 @@
-// frontend/src/components/CloseCallFilter.tsx
+
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Switch,
-  FormControlLabel,
-  Grid,
-  Divider,
-} from '@mui/material';
-import { FilterList, Refresh } from '@mui/icons-material';
+import { Grid } from '@mui/material';
 import { CloseCallFilters } from '../types/closeCall';
 import { getResetCloseCallFilters } from '../utils/closeCallUtils';
+import BaseFilter from './tools/filterbox/BaseFilter';
+import { SelectFilter, SwitchFilter, TextFilter } from './tools/filterbox/FilterFields';
 
 interface CloseCallFilterProps {
   filters: CloseCallFilters;
@@ -28,189 +14,119 @@ interface CloseCallFilterProps {
   isLoading?: boolean;
 }
 
-const CloseCallFilter: React.FC<CloseCallFilterProps> = ({
-  filters,
-  onFiltersChange,
-  onApply,
-  onReset,
-  isLoading = false,
-}) => {
+const CloseCallFilter: React.FC<CloseCallFilterProps> = (props) => {
+  const { filters, onFiltersChange } = props;
+
   const handleFilterChange = (key: keyof CloseCallFilters, value: any) => {
-    onFiltersChange({
-      ...filters,
-      [key]: value,
-    });
+    onFiltersChange({ ...filters, [key]: value });
   };
 
-  const handleApply = () => {
-    onApply(filters);
-  };
+  const VEHICLE_CLASS_OPTIONS = [
+    { value: '', label: 'All Classes' },
+    { value: 'vehicle', label: 'Vehicle' },
+    { value: 'pallet_truck', label: 'Pallet Truck' },
+    { value: 'agv', label: 'AGV' },
+  ];
 
-  const handleReset = () => {
-    const resetFilters = getResetCloseCallFilters();
-    onFiltersChange(resetFilters);
-    onReset();
-  };
+  const TIME_BUCKET_OPTIONS = [
+    { value: '', label: 'No Bucket' },
+    { value: '5m', label: '5 Minutes' },
+    { value: '15m', label: '15 Minutes' },
+    { value: '1h', label: '1 Hour' },
+    { value: '4h', label: '4 Hours' },
+    { value: '1d', label: '1 Day' },
+  ];
 
   return (
-    <Card elevation={1}>
-      <CardHeader
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FilterList />
-            <span>Close Call Filters</span>
-          </Box>
-        }
-        sx={{ pb: 1 }}
-      />
-      <Divider />
-      <CardContent>
-        <Grid container spacing={2}>
-          {/* Time Range */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="From Time"
-              type="datetime-local"
-              value={filters.from_time || ''}
-              onChange={(e) => handleFilterChange('from_time', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="To Time"
-              type="datetime-local"
-              value={filters.to_time || ''}
-              onChange={(e) => handleFilterChange('to_time', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
+    <BaseFilter {...props} title="Close Call Filters" resetFilters={getResetCloseCallFilters()}>
+      {/* Time Range */}
+      <Grid size={{ xs: 12 }}>
+        <TextFilter
+          label="From Time"
+          value={filters.from_time || ''}
+          onChange={(value) => handleFilterChange('from_time', value)}
+          type="datetime-local"
+        />
+      </Grid>
+      
+      <Grid size={{ xs: 12 }}>
+        <TextFilter
+          label="To Time"
+          value={filters.to_time || ''}
+          onChange={(value) => handleFilterChange('to_time', value)}
+          type="datetime-local"
+        />
+      </Grid>
 
-          {/* Distance Threshold */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Distance Threshold (meters)"
-              type="number"
-              value={filters.distance_threshold || 0}
-              onChange={(e) => handleFilterChange('distance_threshold', parseFloat(e.target.value))}
-              inputProps={{ min: 0.1, max: 10, step: 0.1 }}
-            />
-          </Grid>
+      {/* Distance Threshold */}
+      <Grid size={{ xs: 12 }}>
+        <TextFilter
+          label="Distance Threshold (meters)"
+          value={filters.distance_threshold || 0}
+          onChange={(value) => handleFilterChange('distance_threshold', value)}
+          type="number"
+          inputProps={{ min: 0.1, max: 10, step: 0.1 }}
+        />
+      </Grid>
 
-          {/* Time Window */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Time Window (ms)"
-              type="number"
-              value={filters.time_window_ms || 0}
-              onChange={(e) => handleFilterChange('time_window_ms', parseInt(e.target.value))}
-              inputProps={{ min: 50, max: 1000, step: 50 }}
-            />
-          </Grid>
+      {/* Time Window */}
+      <Grid size={{ xs: 12 }}>
+        <TextFilter
+          label="Time Window (ms)"
+          value={filters.time_window_ms || 0}
+          onChange={(value) => handleFilterChange('time_window_ms', value)}
+          type="number"
+          inputProps={{ min: 50, max: 1000, step: 50 }}
+        />
+      </Grid>
 
-          {/* Object Class */}
-          <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth>
-              <InputLabel>Vehicle Class</InputLabel>
-              <Select
-                value={filters.object_class || ''}
-                label="Vehicle Class"
-                onChange={(e) => handleFilterChange('object_class', e.target.value)}
-              >
-                <MenuItem value="">All Classes</MenuItem>
-                <MenuItem value="vehicle">Vehicle</MenuItem>
-                <MenuItem value="pallet_truck">Pallet Truck</MenuItem>
-                <MenuItem value="agv">AGV</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Object Class */}
+      <Grid size={{ xs: 12 }}>
+        <SelectFilter
+          label="Vehicle Class"
+          value={filters.object_class || ''}
+          onChange={(value) => handleFilterChange('object_class', value)}
+          options={VEHICLE_CLASS_OPTIONS}
+        />
+      </Grid>
 
-          {/* Zone */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Zone"
-              value={filters.zone || ''}
-              onChange={(e) => handleFilterChange('zone', e.target.value)}
-              placeholder="Filter by specific zone"
-            />
-          </Grid>
+      {/* Zone */}
+      <Grid size={{ xs: 12 }}>
+        <TextFilter
+          label="Zone"
+          value={filters.zone || ''}
+          onChange={(value) => handleFilterChange('zone', value)}
+          placeholder="Filter by specific zone"
+        />
+      </Grid>
 
-          {/* Time Bucket */}
-          <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth>
-              <InputLabel>Time Bucket</InputLabel>
-              <Select
-                value={filters.time_bucket || ''}
-                label="Time Bucket"
-                onChange={(e) => handleFilterChange('time_bucket', e.target.value)}
-              >
-                <MenuItem value="">No Bucket</MenuItem>
-                <MenuItem value="5m">5 Minutes</MenuItem>
-                <MenuItem value="15m">15 Minutes</MenuItem>
-                <MenuItem value="1h">1 Hour</MenuItem>
-                <MenuItem value="4h">4 Hours</MenuItem>
-                <MenuItem value="1d">1 Day</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+      {/* Time Bucket */}
+      <Grid size={{ xs: 12 }}>
+        <SelectFilter
+          label="Time Bucket"
+          value={filters.time_bucket || ''}
+          onChange={(value) => handleFilterChange('time_bucket', value)}
+          options={TIME_BUCKET_OPTIONS}
+        />
+      </Grid>
 
-          {/* Switches */}
-          <Grid size={{ xs: 12 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={filters.include_details ?? true}
-                  onChange={(e) => handleFilterChange('include_details', e.target.checked)}
-                />
-              }
-              label="Include Details"
-            />
-          </Grid>
+      {/* Switches */}
+      <Grid size={{ xs: 12 }}>
+        <SwitchFilter
+          label="Include Details"
+          checked={filters.include_details ?? true}
+          onChange={(checked) => handleFilterChange('include_details', checked)}
+        />
+      </Grid>
 
-          <Grid size={{ xs: 12 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={filters.force_refresh ?? false}
-                  onChange={(e) => handleFilterChange('force_refresh', e.target.checked)}
-                />
-              }
-              label="Force Refresh"
-            />
-          </Grid>
-
-          {/* Action Buttons */}
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-              <Button
-                variant="contained"
-                onClick={handleApply}
-                disabled={isLoading}
-                startIcon={<Refresh />}
-                fullWidth
-              >
-                {isLoading ? 'Loading...' : 'Apply Filters'}
-              </Button>
-              
-              <Button
-                variant="outlined"
-                onClick={handleReset}
-                disabled={isLoading}
-                fullWidth
-              >
-                Reset
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+      <Grid size={{ xs: 12 }}>
+        <SwitchFilter
+          label="Force Refresh"
+          checked={filters.force_refresh ?? false}
+          onChange={(checked) => handleFilterChange('force_refresh', checked)}
+        />
+      </Grid>
+    </BaseFilter>
   );
 };
 

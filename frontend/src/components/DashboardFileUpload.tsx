@@ -1,4 +1,4 @@
-// frontend\src\components\DashboardFileUpload.tsx
+
 import React from 'react';
 import {
   Box,
@@ -12,8 +12,8 @@ import {
   ExpandLess as ExpandLessIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import FileUpload from './FileUpload';
 import { UploadResponse } from '../types/upload';
+import FileUpload from './tools/FileUpload';
 
 interface DashboardFileUploadProps {
   onUploadSuccess?: (response: UploadResponse) => void;
