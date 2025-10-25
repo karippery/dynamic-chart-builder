@@ -144,24 +144,169 @@ class CloseCallKPIResponseSerializer(serializers.Serializer):
             
         return data
 
-class OverspeedKPISerializer(serializers.Serializer):
-    """Serializer for overspeed KPI response."""
-    total_count = serializers.IntegerField()
+from rest_framework import serializers
+from kpi.common.pagination import DefaultPagination
+
+
+class OverspeedEventRequestSerializer(serializers.Serializer):
+    """
+    Serializer for validating overspeed event parameters.
+    """
+    from_time = serializers.DateTimeField(
+        required=False,
+        help_text="Start time for detection period"
+    )
+    to_time = serializers.DateTimeField(
+        required=False,
+        help_text="End time for detection period"
+    )
+    zone = serializers.CharField(
+        required=False,
+        help_text="Filter by specific zone"
+    )
+    speed_threshold = serializers.FloatField(
+        default=1.5,
+        min_value=0.1,
+        help_text="Speed threshold in m/s to consider as overspeed"
+    )
+    include_humans = serializers.BooleanField(
+        default=False,
+        help_text="Include humans in overspeed monitoring"
+    )
+    object_class = serializers.ChoiceField(
+        choices=[('VEHICLE', 'Vehicle'), ('PALLET_TRUCK', 'Pallet Truck'), ('AGV', 'AGV'), ('HUMAN', 'Human')],
+        required=False,
+        help_text="Filter by specific object class"
+    )
+    # Pagination parameters
+    page = serializers.IntegerField(
+        default=1,
+        min_value=1,
+        required=False,
+        help_text="Page number for pagination"
+    )
+    page_size = serializers.IntegerField(
+        default=10,
+        min_value=1,
+        max_value=100,
+        required=False,
+        help_text="Number of items per page"
+    )
+
+
+class VestViolationRequestSerializer(serializers.Serializer):
+    """
+    Serializer for validating vest violation parameters.
+    """
+    from_time = serializers.DateTimeField(
+        required=False,
+        help_text="Start time for detection period"
+    )
+    to_time = serializers.DateTimeField(
+        required=False,
+        help_text="End time for detection period"
+    )
+    zone = serializers.CharField(
+        required=False,
+        help_text="Filter by specific zone"
+    )
+    # Pagination parameters
+    page = serializers.IntegerField(
+        default=1,
+        min_value=1,
+        required=False,
+        help_text="Page number for pagination"
+    )
+    page_size = serializers.IntegerField(
+        default=10,
+        min_value=1,
+        max_value=100,
+        required=False,
+        help_text="Number of items per page"
+    )
+
+
+class OverspeedEventDetailSerializer(serializers.Serializer):
+    """Serializer for individual overspeed event details."""
+    id = serializers.IntegerField()
+    timestamp = serializers.DateTimeField()
+    tracking_id = serializers.CharField()
+    object_class = serializers.CharField()
+    speed = serializers.FloatField(allow_null=True)
+    derived_speed = serializers.FloatField(allow_null=True)
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    zone = serializers.CharField(allow_null=True)
     speed_threshold = serializers.FloatField()
-    by_object_class = serializers.ListField(child=serializers.DictField())
-    statistics = serializers.DictField()
 
 
-class VestViolationKPISerializer(serializers.Serializer):
-    """Serializer for vest violation KPI response."""
-    total_count = serializers.IntegerField()
-    by_zone = serializers.ListField(child=serializers.DictField())
-    statistics = serializers.DictField()
+class VestViolationDetailSerializer(serializers.Serializer):
+    """Serializer for individual vest violation details."""
+    id = serializers.IntegerField()
+    timestamp = serializers.DateTimeField()
+    tracking_id = serializers.CharField()
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    zone = serializers.CharField(allow_null=True)
 
 
-class SafetyKPISummarySerializer(serializers.Serializer):
-    """Serializer for comprehensive safety KPI summary."""
-    close_calls = CloseCallKPIResponseSerializer(help_text="Close call metrics")
-    overspeed_events = OverspeedKPISerializer(help_text="Overspeed event metrics")
-    vest_violations = VestViolationKPISerializer(help_text="Vest violation metrics")
-    metadata = serializers.DictField(help_text="Computation metadata")
+class OverspeedEventsResponseSerializer(serializers.Serializer):
+    """
+    Serializer for overspeed events response.
+    """
+    total_count = serializers.IntegerField(help_text="Total number of overspeed events")
+    speed_threshold = serializers.FloatField(help_text="Speed threshold used")
+    parameters_used = serializers.DictField(help_text="Parameters used for computation")
+    by_object_class = serializers.ListField(
+        child=serializers.DictField(),
+        help_text="Overspeed events grouped by object class"
+    )
+    statistics = serializers.DictField(help_text="Computation statistics")
+    overspeed_events = OverspeedEventDetailSerializer(
+        many=True,
+        required=False,
+        help_text="Detailed overspeed event information"
+    )
+    computed_at = serializers.DateTimeField(
+        help_text="When the computation was performed",
+        required=False
+    )
+    # Pagination metadata
+    pagination = serializers.DictField(
+        help_text="Pagination information for overspeed_events",
+        required=False
+    )
+
+
+class VestViolationsResponseSerializer(serializers.Serializer):
+    """
+    Serializer for vest violations response.
+    """
+    total_count = serializers.IntegerField(help_text="Total number of vest violations")
+    parameters_used = serializers.DictField(help_text="Parameters used for computation")
+    by_zone_full = serializers.ListField(
+        child=serializers.DictField(),
+        help_text="Vest violations grouped by zone (full dataset)",
+        required=False
+    )
+    by_zone = serializers.ListField(
+        child=serializers.DictField(),
+        help_text="Vest violations grouped by zone (current page only)"
+    )
+    statistics = serializers.DictField(help_text="Computation statistics")
+    vest_violations = VestViolationDetailSerializer(
+        many=True,
+        required=False,
+        help_text="Detailed vest violation information"
+    )
+    computed_at = serializers.DateTimeField(
+        help_text="When the computation was performed",
+        required=False
+    )
+    # Pagination metadata
+    pagination = serializers.DictField(
+        help_text="Pagination information for vest_violations",
+        required=False
+    )
+
+
