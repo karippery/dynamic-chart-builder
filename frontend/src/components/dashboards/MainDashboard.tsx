@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Grid, Box } from '@mui/material';
 import { useApp } from '../../hooks/useApp';
 import KpiSummary from '../tools/kpiCard/KpiSummary';
@@ -6,6 +6,7 @@ import DashboardFilter from '../aggregate/AggregateFilter';
 import AggregateBox from '../aggregate/AggregateBox';
 import ChartVisualization from '../aggregate/AggregateChart';
 import DashboardFileUpload from '../aggregate/AggregateFileUpload';
+import { ChartType } from '../../types/charts';
 
 const MainDashboard: React.FC = () => {
   const {
@@ -21,7 +22,14 @@ const MainDashboard: React.FC = () => {
     isFilterLoading
   } = useApp();
 
+  // Add state for chart type
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>('bar');
+
   const hasAggregateData = aggregateData?.series && aggregateData.series.length > 0;
+
+  const handleChartTypeChange = (chartType: ChartType) => {
+    setSelectedChartType(chartType);
+  };
 
   return (
     <Grid container spacing={1}>
@@ -62,8 +70,8 @@ const MainDashboard: React.FC = () => {
               metric={filters.metric}
               isLoading={isFilterLoading || isAggregateLoading}
               error={aggregateError}
-              onChartTypeChange={() => {}}
-              selectedChartType="bar"
+              onChartTypeChange={handleChartTypeChange}
+              selectedChartType={selectedChartType}
             />
           </Box>
         </Grid>

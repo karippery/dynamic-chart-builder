@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Grid,
@@ -23,23 +22,20 @@ interface DashboardFilterProps {
 }
 
 const DashboardFilter: React.FC<DashboardFilterProps> = (props) => {
-  const { filters, onFiltersChange } = props;
+  const { filters, onApply, onReset } = props;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [localFilters, setLocalFilters] = useState<AggregationFilters>(filters);
 
+  // Sync local filters when parent filters change
   useEffect(() => {
-    if (!filters.group_by || filters.group_by.length === 0) {
-      const initialFilters = { ...DEFAULT_FILTERS };
-      setLocalFilters(initialFilters);
-      onFiltersChange(initialFilters);
-    } else {
-      setLocalFilters(filters);
-    }
-  }, [filters, onFiltersChange]);
+    setLocalFilters(filters);
+  }, [filters]);
 
   const handleFilterChange = (key: keyof AggregationFilters, value: any) => {
     const updatedFilters = { ...localFilters, [key]: value };
     setLocalFilters(updatedFilters);
+    // Optional: Auto-apply changes or debounce
+    // onFiltersChange(updatedFilters);
   };
 
   const handleDateRangeChange = (dateRange: DateRange) => {
@@ -80,11 +76,24 @@ const DashboardFilter: React.FC<DashboardFilterProps> = (props) => {
     };
   };
 
+  // Handle apply button click
+  const handleApply = () => {
+    onApply(localFilters);
+  };
+
+  // Handle reset button click
+  const handleReset = () => {
+    setLocalFilters(DEFAULT_FILTERS);
+    onReset();
+  };
+
   return (
     <BaseFilter 
       {...props} 
       filters={localFilters}
       onFiltersChange={setLocalFilters}
+      onApply={handleApply}
+      onReset={handleReset}
       title="Dashboard Filters" 
       resetFilters={DEFAULT_FILTERS}
     >

@@ -27,14 +27,32 @@ export const SafetyDashboard: React.FC<SafetyDashboardProps> = ({ refreshCount }
     include_humans: false
   });
 
-  const { vestViolations, overspeedEvents, isLoading, error, refetch } = useSafetyData(filters, refreshCount);
+  const [appliedFilters, setAppliedFilters] = useState<SafetyFiltersType>(filters);
 
-  const handleApplyFilters = () => {
-    refetch();
+  const { vestViolations, overspeedEvents, isLoading, error, refetch } = useSafetyData(appliedFilters, refreshCount);
+
+  const handleApplyFilters = (appliedFilters: SafetyFiltersType) => {
+    console.log('Applying filters in dashboard:', appliedFilters);
+    setAppliedFilters(appliedFilters);
+    // The useSafetyData hook will automatically refetch when appliedFilters changes
   };
 
   const handleResetFilters = () => {
-    refetch();
+    console.log('Resetting filters in dashboard');
+    const defaultFilters: SafetyFiltersType = {
+      page: 1,
+      page_size: 10,
+      time_bucket: '1h',
+      distance_threshold: 2.0,
+      time_window_ms: 5000,
+      include_details: false,
+      force_refresh: false,
+      speed_threshold: 1.5,
+      include_humans: false
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
+    // The useSafetyData hook will automatically refetch when appliedFilters changes
   };
 
   return (
@@ -108,6 +126,7 @@ export const SafetyDashboard: React.FC<SafetyDashboardProps> = ({ refreshCount }
               vestViolations={vestViolations}
               overspeedEvents={overspeedEvents}
               isLoading={isLoading}
+              objectClassFilter={appliedFilters.object_class} // Pass the applied filter here
             />
           </Box>
         </Grid>

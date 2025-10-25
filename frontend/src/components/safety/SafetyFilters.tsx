@@ -1,5 +1,5 @@
 // frontend\src\components\SafetyFilters.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid } from '@mui/material';
 import { SafetyFiltersType } from '../../types/safety';
 import BaseFilter from '../tools/filterbox/BaseFilter';
@@ -8,16 +8,22 @@ import { SelectFilter, SwitchFilter, TextFilter } from '../tools/filterbox/Filte
 interface SafetyFiltersProps {
   filters: SafetyFiltersType;
   onFiltersChange: (filters: SafetyFiltersType) => void;
-  onApply: () => void;
+  onApply: (filters: SafetyFiltersType) => void;
   onReset: () => void;
   isLoading?: boolean;
 }
 
 const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
-  const { filters, onFiltersChange } = props;
+  const { filters, onApply, onReset } = props;
+  const [localFilters, setLocalFilters] = useState<SafetyFiltersType>(filters);
+
+  // Sync local filters when parent filters change
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
 
   const handleFilterChange = (key: keyof SafetyFiltersType, value: any) => {
-    onFiltersChange({ ...filters, [key]: value });
+    setLocalFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const resetFilters: SafetyFiltersType = {
@@ -29,10 +35,26 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
     force_refresh: false
   };
 
+  // Handle apply button click
+  const handleApply = () => {
+    console.log('Applying safety filters:', localFilters);
+    onApply(localFilters);
+  };
+
+  // Handle reset button click
+  const handleReset = () => {
+    console.log('Resetting safety filters');
+    setLocalFilters(resetFilters);
+    onReset();
+  };
+
   return (
     <BaseFilter 
       {...props}
-      onApply={() => props.onApply()}
+      filters={localFilters}
+      onFiltersChange={setLocalFilters}
+      onApply={handleApply}
+      onReset={handleReset}
       title="Safety Filters"
       resetFilters={resetFilters}
     >
@@ -40,7 +62,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="From Time"
-          value={filters.from_time || ''}
+          value={localFilters.from_time || ''}
           onChange={(value) => handleFilterChange('from_time', value)}
           type="datetime-local"
           placeholder="Start time"
@@ -50,7 +72,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="To Time"
-          value={filters.to_time || ''}
+          value={localFilters.to_time || ''}
           onChange={(value) => handleFilterChange('to_time', value)}
           type="datetime-local"
           placeholder="End time"
@@ -61,18 +83,24 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Zone"
-          value={filters.zone || ''}
+          value={localFilters.zone || ''}
           onChange={(value) => handleFilterChange('zone', value)}
           placeholder="e.g., 9, 12"
         />
       </Grid>
 
       <Grid size={{ xs: 12, sm: 6 }}>
-        <TextFilter
+        <SelectFilter
           label="Object Class"
-          value={filters.object_class || ''}
+          value={localFilters.object_class || ''}
           onChange={(value) => handleFilterChange('object_class', value)}
-          placeholder="e.g., AGV, person, vehicle"
+          options={[
+            { value: '', label: 'All' },
+            { value: 'HUMAN', label: 'Human' },
+            { value: 'VEHICLE', label: 'Vehicle' },
+            { value: 'PALLET_TRUCK', label: 'Pallet Truck' },
+            { value: 'AGV', label: 'AGV' },
+          ]}
         />
       </Grid>
 
@@ -80,7 +108,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <SelectFilter
           label="Time Bucket"
-          value={filters.time_bucket || '1h'}
+          value={localFilters.time_bucket || '1h'}
           onChange={(value) => handleFilterChange('time_bucket', value)}
           options={[
             { value: '15m', label: '15 minutes' },
@@ -94,7 +122,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Time Window (ms)"
-          value={filters.time_window_ms || 5000}
+          value={localFilters.time_window_ms || 5000}
           onChange={(value) => handleFilterChange('time_window_ms', value)}
           type="number"
           inputProps={{ min: 1000, step: 1000 }}
@@ -105,7 +133,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Distance Threshold"
-          value={filters.distance_threshold || 2.0}
+          value={localFilters.distance_threshold || 2.0}
           onChange={(value) => handleFilterChange('distance_threshold', value)}
           type="number"
           inputProps={{ step: 0.1, min: 0 }}
@@ -115,7 +143,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Speed Threshold (m/s)"
-          value={filters.speed_threshold || 1.5}
+          value={localFilters.speed_threshold || 1.5}
           onChange={(value) => handleFilterChange('speed_threshold', value)}
           type="number"
           inputProps={{ step: 0.1, min: 0 }}
@@ -126,7 +154,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <SwitchFilter
           label="Include Details"
-          checked={filters.include_details || false}
+          checked={localFilters.include_details || false}
           onChange={(checked) => handleFilterChange('include_details', checked)}
         />
       </Grid>
@@ -134,7 +162,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12, sm: 6 }}>
         <SwitchFilter
           label="Include Humans in Overspeed Monitoring"
-          checked={filters.include_humans || false}
+          checked={localFilters.include_humans || false}
           onChange={(checked) => handleFilterChange('include_humans', checked)}
         />
       </Grid>
@@ -142,7 +170,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
       <Grid size={{ xs: 12 }}>
         <SwitchFilter
           label="Force Refresh Cache"
-          checked={filters.force_refresh || false}
+          checked={localFilters.force_refresh || false}
           onChange={(checked) => handleFilterChange('force_refresh', checked)}
         />
       </Grid>

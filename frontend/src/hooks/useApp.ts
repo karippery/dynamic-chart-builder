@@ -6,7 +6,7 @@ import { getDefaultCloseCallFilters, getResetCloseCallFilters } from '../utils/c
 import { useAggregateData } from './useAggregateData';
 import { CloseCallFilters } from '../types/closeCall';
 import { useCloseCallData } from './useCloseCallData';
-
+import { DEFAULT_FILTERS } from '../components/aggregate/AggregateFilterConstants';
 
 export const useApp = () => {
   // Navigation
@@ -23,15 +23,15 @@ export const useApp = () => {
   // Main dashboard data
   const { kpiData, isLoading, error, refetch } = useSumCardData(refreshCount);
   
-  // Aggregate data
-  const [filters, setFilters] = useState<AggregationFilters>({
-    metric: 'count',
-    entity: '',
-    group_by: ['object_class'],
-    time_bucket: '1h',
-  });
+  // Aggregate data - use DEFAULT_FILTERS as initial state
+  const [filters, setFilters] = useState<AggregationFilters>(DEFAULT_FILTERS);
   
-  const { aggregateData, isLoading: isAggregateLoading, error: aggregateError, refetch: refetchAggregate } = useAggregateData(filters);
+  const { 
+    aggregateData, 
+    isLoading: isAggregateLoading, 
+    error: aggregateError, 
+    refetch: refetchAggregate 
+  } = useAggregateData(filters);
 
   // Close call data
   const [closeCallFilters, setCloseCallFilters] = useState<CloseCallFilters>(getDefaultCloseCallFilters());
@@ -52,7 +52,7 @@ export const useApp = () => {
     vehicleClass: null as string | null,
   });
 
-  // Main dashboard handlers
+  // Main dashboard handlers - FIXED VERSION
   const handleFiltersChange = (newFilters: AggregationFilters) => {
     setFilters(newFilters);
   };
@@ -60,16 +60,29 @@ export const useApp = () => {
   const handleApplyFilters = async (appliedFilters: AggregationFilters) => {
     setIsFilterLoading(true);
     try {
-      // Filter API logic here
+      console.log('Applying main dashboard filters:', appliedFilters);
+      setFilters(appliedFilters);
+      
+      // Trigger data refetch with new filters
+      await Promise.all([
+        refetch(),
+        refetchAggregate()
+      ]);
+      
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('Error applying filters:', error);
     } finally {
       setIsFilterLoading(false);
     }
   };
 
   const handleResetFilters = () => {
-    // Reset filter logic
+    console.log('Resetting main dashboard filters');
+    setFilters(DEFAULT_FILTERS);
+    
+    // Trigger data refetch with default filters
+    refetch();
+    refetchAggregate();
   };
 
   // Close-call handlers
@@ -80,8 +93,13 @@ export const useApp = () => {
   const handleApplyCloseCallFilters = async (appliedFilters: CloseCallFilters) => {
     setIsFilterLoading(true);
     try {
+      console.log('Applying close-call filters:', appliedFilters);
       setAppliedCloseCallFilters(appliedFilters);
       setTableFilters({ severity: null, vehicleClass: null });
+      
+      // Trigger close-call data refetch
+      await refetchCloseCalls();
+      
     } catch (error) {
       console.error('Error applying close-call filters:', error);
     } finally {
@@ -90,10 +108,14 @@ export const useApp = () => {
   };
 
   const handleResetCloseCallFilters = () => {
+    console.log('Resetting close-call filters');
     const resetFilters = getResetCloseCallFilters();
     setCloseCallFilters(resetFilters);
     setAppliedCloseCallFilters(resetFilters);
     setTableFilters({ severity: null, vehicleClass: null });
+    
+    // Trigger close-call data refetch
+    refetchCloseCalls();
   };
 
   const handleCloseCallPageChange = (page: number, pageSize: number) => {
@@ -117,6 +139,7 @@ export const useApp = () => {
   useEffect(() => {
     if (toggleState) {
       const interval = setInterval(() => {
+        console.log('Auto-refreshing data...');
         refetch();
         refetchAggregate();
         refetchCloseCalls();
@@ -124,6 +147,15 @@ export const useApp = () => {
       return () => clearInterval(interval);
     }
   }, [toggleState, refetch, refetchAggregate, refetchCloseCalls]);
+
+  // Debug effect to log filter changes
+  useEffect(() => {
+    console.log('Current main dashboard filters:', filters);
+  }, [filters]);
+
+  useEffect(() => {
+    console.log('Current close-call filters:', appliedCloseCallFilters);
+  }, [appliedCloseCallFilters]);
 
   return {
     // Navigation
