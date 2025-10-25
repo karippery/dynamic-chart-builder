@@ -6,8 +6,8 @@ import GlobalStyles from './theme/GlobalStyles';
 import { useApp } from './hooks/useApp';
 import NavBar from './components/NavBar';
 import MainDashboard from './components/dashboards/MainDashboard';
-import CloseCallDashboard from './components/dashboards/CloseCallDashboard';
-import { SafetyDashboard } from './components/SafetyDashboard';
+import CloseCallDashboard from './components/closecall/CloseCallDashboard';
+import { SafetyDashboard } from './components/safety/SafetyDashboard';
 
 function App() {
   const {

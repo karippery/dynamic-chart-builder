@@ -8,11 +8,11 @@ import {
   Typography,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
-import DateRangePicker from './tools/DateRangePicker';
-import { AggregationFilters, DateRange } from '../types/filters';
-import { DEFAULT_FILTERS } from './DashboardFilterConstants';
-import BaseFilter from './tools/filterbox/BaseFilter';
-import { MultiSelectFilter, SelectFilter, TextFilter } from './tools/filterbox/FilterFields';
+import DateRangePicker from '../tools/DateRangePicker';
+import { AggregationFilters, DateRange } from '../../types/filters';
+import { DEFAULT_FILTERS } from './AggregateFilterConstants';
+import BaseFilter from '../tools/filterbox/BaseFilter';
+import { MultiSelectFilter, SelectFilter, TextFilter } from '../tools/filterbox/FilterFields';
 
 interface DashboardFilterProps {
   filters: AggregationFilters;

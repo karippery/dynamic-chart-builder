@@ -10,13 +10,13 @@ import {
   TableCell,
   Alert,
   Button,
+  TablePagination,
 } from '@mui/material';
-import { CloseCallResponse, CloseCallDetail } from '../types/closeCall';
-import { getSeverityColor, formatCloseCallTime } from '../utils/closeCallUtils';
-import { BaseTable } from './tools/tables/BaseTable';
-import { TableHeader, TableColumn } from './tools/tables/TableHeader';
-import { TablePagination } from './tools/tables/TablePagination';
-import { stableSort, getComparator, Order } from './tools/tables/tableUtils';
+import { CloseCallDetail, CloseCallResponse } from '../../types/closeCall';
+import { getComparator, Order, stableSort } from '../tools/tables/tableUtils';
+import { TableColumn, TableHeader } from '../tools/tables/TableHeader';
+import { BaseTable } from '../tools/tables/BaseTable';
+import { formatCloseCallTime, getSeverityColor } from '../../utils/closeCallUtils';
 
 interface CloseCallDetailsProps {
   data: CloseCallResponse | null;

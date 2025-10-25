@@ -6,10 +6,10 @@ import {
   AlertCircle,
   Activity
 } from 'lucide-react'
-import KpiCardGrid from './tools/kpiCard/KpiCardGrid';
 import { Alert, Box } from '@mui/material';
+import { CloseCallKpiData } from '../../types/closeCall';
+import KpiCardGrid from '../tools/kpiCard/KpiCardGrid';
 import CloseCallSummaryCards from './CloseCallSummaryCards';
-import { CloseCallKpiData } from '../types/closeCall';
 
 
 interface CloseCallKpiSummaryProps {

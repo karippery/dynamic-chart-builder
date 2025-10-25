@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Card, Typography } from '@mui/material';
-import { CloseCallResponse } from '../types/closeCall';
 import { Warning, Error, Place } from '@mui/icons-material';
+import { CloseCallResponse } from '../../types/closeCall';
 
 // Create a partial type that only requires the fields we actually use
 interface CloseCallSummaryData {

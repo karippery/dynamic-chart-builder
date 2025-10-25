@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { ChartData, ChartType } from '../types/charts';
-import { ChartConfigService } from '../services/chartConfigService';
-import { BaseChart } from './tools/charts/BaseChart';
-import { ChartRenderer } from './tools/charts/ChartRenderer';
-import { useChartData } from '../hooks/useChartData';
-import { useChartOptions } from '../hooks/useChartOptions';
+import { ChartData, ChartType } from '../../types/charts';
+import { ChartConfigService } from '../../services/chartConfigService';
+import { BaseChart } from '../tools/charts/BaseChart';
+import { ChartRenderer } from '../tools/charts/ChartRenderer';
+import { useChartData } from '../../hooks/useChartData';
+import { useChartOptions } from '../../hooks/useChartOptions';
 
 interface ChartVisualizationProps {
   chartData: ChartData | null;

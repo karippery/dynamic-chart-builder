@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, Grid, Alert } from '@mui/material';
 import { useApp } from '../../hooks/useApp';
-import CloseCallKpiSummary from '../CloseCallKpiSummary';
-import CloseCallFilter from '../CloseCallFilter';
-import CloseCallSummaryCards from '../CloseCallSummaryCards';
-import CloseCallDetails from '../CloseCallDetails';
+import CloseCallDetails from './CloseCallDetails';
+import CloseCallKpiSummary from './CloseCallKpiSummary';
+import CloseCallFilter from './CloseCallFilter';
+import CloseCallSummaryCards from './CloseCallSummaryCards';
 
 interface CloseCallDashboardProps {
   kpiData: any;

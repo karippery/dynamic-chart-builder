@@ -1,9 +1,9 @@
 // frontend\src\components\SafetyFilters.tsx
 import React from 'react';
 import { Grid } from '@mui/material';
-import { SafetyFiltersType } from '../types/safety';
-import BaseFilter from './tools/filterbox/BaseFilter';
-import { SelectFilter, SwitchFilter, TextFilter } from './tools/filterbox/FilterFields';
+import { SafetyFiltersType } from '../../types/safety';
+import BaseFilter from '../tools/filterbox/BaseFilter';
+import { SelectFilter, SwitchFilter, TextFilter } from '../tools/filterbox/FilterFields';
 
 interface SafetyFiltersProps {
   filters: SafetyFiltersType;

@@ -6,13 +6,13 @@ import {
   Typography,
   Paper
 } from '@mui/material';
-import { SafetySummaryCard } from './SafetySummaryCard';
-import { SafetyDataTable } from './SafetyDataTable';
-import { SafetyCharts } from './SafetyCharts';
-import { SafetyFilters } from './SafetyFilters';
 import { Warning, Speed, Assessment, Timeline } from '@mui/icons-material';
-import { useSafetyData } from '../hooks/useSafetyData';
-import { SafetyFiltersType } from '../types/safety';
+import { SafetyFiltersType } from '../../types/safety';
+import { useSafetyData } from '../../hooks/useSafetyData';
+import { SafetySummaryCard } from './SafetySummaryCard';
+import { SafetyCharts } from './SafetyCharts';
+import { SafetyDataTable } from './SafetyDataTable';
+import { SafetyFilters } from './SafetyFilters';
 
 interface SafetyDashboardProps {
   refreshCount: number;

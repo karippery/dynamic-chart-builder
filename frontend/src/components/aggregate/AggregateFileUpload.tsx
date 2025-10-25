@@ -12,8 +12,8 @@ import {
   ExpandLess as ExpandLessIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import { UploadResponse } from '../types/upload';
-import FileUpload from './tools/FileUpload';
+import { UploadResponse } from '../../types/upload';
+import FileUpload from '../tools/FileUpload';
 
 interface DashboardFileUploadProps {
   onUploadSuccess?: (response: UploadResponse) => void;

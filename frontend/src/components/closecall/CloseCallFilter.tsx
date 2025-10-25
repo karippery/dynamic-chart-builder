@@ -1,9 +1,10 @@
 import React from 'react';
 import { Grid, Box } from '@mui/material';
-import { CloseCallFilters } from '../types/closeCall';
-import { getResetCloseCallFilters } from '../utils/closeCallUtils';
-import BaseFilter from './tools/filterbox/BaseFilter';
-import { SelectFilter, SwitchFilter, TextFilter } from './tools/filterbox/FilterFields';
+import { CloseCallFilters } from '../../types/closeCall';
+import { getResetCloseCallFilters } from '../../utils/closeCallUtils';
+import BaseFilter from '../tools/filterbox/BaseFilter';
+import { SelectFilter, SwitchFilter, TextFilter } from '../tools/filterbox/FilterFields';
+
 
 interface CloseCallFilterProps {
   filters: CloseCallFilters;

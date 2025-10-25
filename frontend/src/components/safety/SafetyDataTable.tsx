@@ -6,10 +6,10 @@ import {
   TableRow,
   TableCell,
 } from '@mui/material';
-import { OverspeedEvent, VestViolation } from '../types/safety';
-import { BaseTable } from './tools/tables/BaseTable';
-import { TableHeader, TableColumn } from './tools/tables/TableHeader';
-import { TablePagination } from './tools/tables/TablePagination';
+import { OverspeedEvent, VestViolation } from '../../types/safety';
+import { BaseTable } from '../tools/tables/BaseTable';
+import { TableHeader, TableColumn } from '../tools/tables/TableHeader';
+import { TablePagination } from '../tools/tables/TablePagination';
 
 interface SafetyDataTableProps {
   title: string;

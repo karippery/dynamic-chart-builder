@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Grid } from '@mui/material';
-import { BaseChart } from './tools/charts/BaseChart';
-import { ChartRenderer } from './tools/charts/ChartRenderer';
-import { useChartOptions } from '../hooks/useChartOptions';
-import { OverspeedEventsResponse, VestViolationsResponse } from '../types/safety';
-import { ChartType } from '../types/charts';
+import { OverspeedEventsResponse, VestViolationsResponse } from '../../types/safety';
+import { useChartOptions } from '../../hooks/useChartOptions';
+import { BaseChart } from '../tools/charts/BaseChart';
+import { ChartRenderer } from '../tools/charts/ChartRenderer';
+import { ChartType } from '../../types/charts';
+
 
 interface SafetyChartsProps {
   vestViolations: VestViolationsResponse | null;

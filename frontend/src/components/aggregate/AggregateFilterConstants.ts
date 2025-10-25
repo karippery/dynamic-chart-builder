@@ -1,5 +1,5 @@
 
-import { AggregationFilters } from '../types/filters';
+import { AggregationFilters } from '../../types/filters';
 
 export const DEFAULT_FILTERS: AggregationFilters = {
   metric: 'count',

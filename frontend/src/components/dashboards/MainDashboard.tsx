@@ -2,10 +2,10 @@ import React from 'react';
 import { Grid, Box } from '@mui/material';
 import { useApp } from '../../hooks/useApp';
 import KpiSummary from '../tools/kpiCard/KpiSummary';
-import DashboardFileUpload from '../DashboardFileUpload';
-import DashboardFilter from '../DashboardFilter';
-import AggregateBox from '../AggregateBox';
-import ChartVisualization from '../ChartVisualization';
+import DashboardFilter from '../aggregate/AggregateFilter';
+import AggregateBox from '../aggregate/AggregateBox';
+import ChartVisualization from '../aggregate/AggregateChart';
+import DashboardFileUpload from '../aggregate/AggregateFileUpload';
 
 const MainDashboard: React.FC = () => {
   const {
