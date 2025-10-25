@@ -1,4 +1,3 @@
-// frontend/src/App.tsx
 import React, { useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -17,6 +16,13 @@ import AggregateBox from './components/AggregateBox';
 import ChartVisualization from './components/ChartVisualization';
 import { ChartType } from './types/charts';
 import DashboardFileUpload from './components/DashboardFileUpload';
+import { CloseCallFilters } from './types/closeCall';
+import { useCloseCallData } from './hooks/useCloseCallData';
+import CloseCallFilter from './components/CloseCallFilter';
+import CloseCallKpiSummary from './components/CloseCallKpiSummary';
+import CloseCallChart from './components/CloseCallChart';
+import CloseCallDetails from './components/CloseCallDetails';
+import { getDefaultCloseCallFilters, getResetCloseCallFilters } from './utils/closeCallUtils';
 
 function App() {
   const { 
@@ -34,32 +40,48 @@ function App() {
   const [filters, setFilters] = useState<AggregationFilters>({
     metric: 'count',
     entity: '',
-    group_by: ['time_bucket'], // Default grouping for chart
+    group_by: ['object_class'],
     time_bucket: '1h',
   });
 
-  // Use aggregateData for BOTH aggregate box and default chart
   const { aggregateData, isLoading: isAggregateLoading, error: aggregateError, refetch: refetchAggregate } = useAggregateData(filters);
 
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<FilterApiResponse | null>(null);
   const [selectedChartType, setSelectedChartType] = useState<ChartType>('bar');
 
+  const [closeCallFilters, setCloseCallFilters] = useState<CloseCallFilters>(getDefaultCloseCallFilters());
+  const [appliedCloseCallFilters, setAppliedCloseCallFilters] = useState<CloseCallFilters>(closeCallFilters);
+  const [tableFilters, setTableFilters] = useState<{
+    severity: string | null;
+    vehicleClass: string | null;
+  }>({
+    severity: null,
+    vehicleClass: null,
+  });
+
+  const { 
+    data: closeCallData, 
+    kpiData: closeCallKpiData, 
+    isLoading: isCloseCallLoading, 
+    error: closeCallError, 
+    refetch: refetchCloseCalls 
+  } = useCloseCallData(appliedCloseCallFilters, refreshCount);
+
   const pageContent = getPageContent();
 
+  // Main dashboard handlers
   const handleFiltersChange = (newFilters: AggregationFilters) => {
     setFilters(newFilters);
   };
 
   const handleApplyFilters = async (appliedFilters: AggregationFilters) => {
     setIsFilterLoading(true);
-    
     try {
       const response = await filterApiService.getFilteredData(appliedFilters);
-      console.log('🎉 API Response:', response);
       setApiResponse(response);
     } catch (error) {
-      console.error('❌ API Error:', error);
+      console.error('API Error:', error);
       setApiResponse(null);
     } finally {
       setIsFilterLoading(false);
@@ -67,24 +89,178 @@ function App() {
   };
 
   const handleResetFilters = () => {
-    console.log('Filters reset');
     setApiResponse(null);
   };
 
-  // Auto-refresh when toggleState (Live Mode) is enabled
+  // Close-call handlers
+  const handleCloseCallFiltersChange = (newFilters: CloseCallFilters) => {
+    setCloseCallFilters(newFilters);
+  };
+
+  const handleApplyCloseCallFilters = async (appliedFilters: CloseCallFilters) => {
+    setIsFilterLoading(true);
+    try {
+      setAppliedCloseCallFilters(appliedFilters);
+      setTableFilters({ severity: null, vehicleClass: null }); // Reset table filters on new data
+    } catch (error) {
+      console.error('Error applying close-call filters:', error);
+    } finally {
+      setIsFilterLoading(false);
+    }
+  };
+
+  const handleResetCloseCallFilters = () => {
+  const resetFilters = getResetCloseCallFilters();
+  setCloseCallFilters(resetFilters);
+  setAppliedCloseCallFilters(resetFilters);
+  setTableFilters({ severity: null, vehicleClass: null });
+  };
+
+  // Table filter handlers
+  const handleSeverityFilter = (severity: string | null) => {
+    setTableFilters(prev => ({ ...prev, severity }));
+  };
+
+  const handleVehicleClassFilter = (vehicleClass: string | null) => {
+    setTableFilters(prev => ({ ...prev, vehicleClass }));
+  };
+
+  // Auto-refresh when Live Mode is enabled
   React.useEffect(() => {
     if (toggleState) {
       const interval = setInterval(() => {
         refetch();
-        refetchAggregate(); // Also refresh aggregate data
+        refetchAggregate();
+        refetchCloseCalls(); 
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [toggleState, refetch, refetchAggregate]);
+  }, [toggleState, refetch, refetchAggregate, refetchCloseCalls]);
 
-  // Determine which data to use for chart
-  // Use apiResponse when filters are applied, otherwise use aggregateData for default chart
   const chartData = apiResponse || aggregateData;
+
+  // Helper function to safely check if aggregate data has series
+  const hasAggregateData = (): boolean => {
+    return !!(aggregateData?.series && aggregateData.series.length > 0);
+  };
+
+  const renderMainDashboard = () => (
+    <Grid container spacing={1}>
+      <Grid size={{ xs: 15 }}>
+        <KpiSummary data={kpiData} isLoading={isLoading} />
+      </Grid>
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Box sx={{ width: '100%', height: 'fit-content', minHeight: 500 }}>
+            <DashboardFileUpload 
+              onUploadSuccess={() => {
+                refetch();
+              }}
+            />
+            <DashboardFilter
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onApply={handleApplyFilters}
+              onReset={handleResetFilters}
+              isLoading={isFilterLoading}
+            />
+          </Box>
+        </Grid>
+        
+        <Grid size={{ xs: 10, md: 9 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {hasAggregateData() && (
+              <AggregateBox
+                value={aggregateData!.series[0].value} // Safe to use ! here since we checked
+                metric={filters.metric}
+                bucket={aggregateData!.meta?.bucket || filters.time_bucket}
+                isLoading={isAggregateLoading}
+                error={aggregateError}
+                objectClass={filters.object_class?.length === 1 ? filters.object_class[0] : undefined}
+              />
+            )}
+            
+            <ChartVisualization
+              chartData={chartData}
+              groupByFields={filters.group_by}
+              metric={filters.metric}
+              isLoading={isFilterLoading || isAggregateLoading}
+              error={aggregateError}
+              onChartTypeChange={setSelectedChartType}
+              selectedChartType={selectedChartType}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+
+  const renderCloseCallDashboard = () => (
+    <Box sx={{ mt: 2 }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          <CloseCallKpiSummary 
+            data={closeCallKpiData} 
+            isLoading={isCloseCallLoading} 
+          />
+        </Grid>
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Box sx={{ width: '100%', height: 'fit-content' }}>
+              <CloseCallFilter
+                filters={closeCallFilters}
+                onFiltersChange={handleCloseCallFiltersChange}
+                onApply={handleApplyCloseCallFilters}
+                onReset={handleResetCloseCallFilters}
+                isLoading={isCloseCallLoading}
+              />
+            </Box>
+          </Grid>
+          
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {closeCallFilters.include_details && (
+                <CloseCallDetails
+                  data={closeCallData}
+                  isLoading={isCloseCallLoading}
+                  onSeverityFilter={handleSeverityFilter}
+                  onVehicleClassFilter={handleVehicleClassFilter}
+                />
+              )}
+              <CloseCallChart
+                data={closeCallData}
+                timeBucket={closeCallFilters.time_bucket || '1h'}
+                isLoading={isCloseCallLoading}
+                error={closeCallError}
+                selectedSeverity={tableFilters.severity}
+                selectedVehicleClass={tableFilters.vehicleClass}
+              />
+              
+            </Box>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  const renderSafetyDashboard = () => (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h5" gutterBottom>
+        Safety Metrics
+      </Typography>
+      <Typography variant="body1" paragraph>
+        Comprehensive safety performance indicators and compliance tracking.
+        View safety reports, incident trends, and improvement recommendations.
+      </Typography>
+      <Box sx={{ mt: 3, p: 3, backgroundColor: 'background.default', borderRadius: 1 }}>
+        <Typography variant="body2" color="text.secondary" fontStyle="italic">
+          Safety compliance metrics and reports will be displayed here.
+        </Typography>
+      </Box>
+    </Box>
+  );
 
   return (
     <ThemeProvider theme={theme}>
@@ -114,106 +290,9 @@ function App() {
             </Alert>
           )}
           
-          {activePage.path === '/main' && (
-            <Grid container spacing={1}>
-              {/* Full-width KPI Summary */}
-              <Grid size={{ xs: 15 }}>
-                <KpiSummary data={kpiData} isLoading={isLoading} />
-              </Grid>
-
-              {/* Main Content Area - Side by Side */}
-              <Grid container spacing={2}>
-                {/* Filters - Left Column - Fixed height */}
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Box 
-                    sx={{ 
-                      width: '100%',
-                      height: 'fit-content',
-                      minHeight: 500, // Match chart height
-                    }}
-                  >
-                    <DashboardFileUpload 
-                        onUploadSuccess={(response) => {
-                          // Refresh KPI data after successful upload
-                          refetch();
-                          console.log('Upload successful, refreshing data...', response);
-                        }}
-                      />
-                    <DashboardFilter
-                      filters={filters}
-                      onFiltersChange={handleFiltersChange}
-                      onApply={handleApplyFilters}
-                      onReset={handleResetFilters}
-                      isLoading={isFilterLoading}
-                    />
-                  </Box>
-                </Grid>
-                
-                {/* Content - Right Column */}
-                <Grid size={{ xs: 10, md: 9 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {/* Aggregate Box */}
-                    {aggregateData && aggregateData.series.length > 0 && (
-                      <AggregateBox
-                        value={aggregateData.series[0].value}
-                        metric={filters.metric}
-                        bucket={aggregateData.meta?.bucket || filters.time_bucket}
-                        isLoading={isAggregateLoading}
-                        error={aggregateError}
-                        objectClass={filters.object_class && filters.object_class.length === 1 ? filters.object_class[0] : undefined}
-                      />
-                    )}
-                    
-                    {/* Chart Visualization */}
-                    <ChartVisualization
-                      chartData={chartData}
-                      groupByFields={filters.group_by}
-                      metric={filters.metric}
-                      isLoading={isFilterLoading || isAggregateLoading}
-                      error={aggregateError}
-                      onChartTypeChange={setSelectedChartType}
-                      selectedChartType={selectedChartType}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-          )}
-          
-          {/* Other pages */}
-          {activePage.path === '/close-call' && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="h5" gutterBottom>
-                Close-call Analysis
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Detailed analysis of recent near-miss incidents and preventive actions.
-                Track safety events and identify potential risks before they escalate.
-              </Typography>
-              <Box sx={{ mt: 3, p: 3, backgroundColor: 'background.default', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                  Close-call analytics and incident reports will be displayed here.
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          
-          {activePage.path === '/safety' && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="h5" gutterBottom>
-                Safety Metrics
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Comprehensive safety performance indicators and compliance tracking.
-                View safety reports, incident trends, and improvement recommendations.
-              </Typography>
-              <Box sx={{ mt: 3, p: 3, backgroundColor: 'background.default', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                  Safety compliance metrics and reports will be displayed here.
-                </Typography>
-              </Box>
-            </Box>
-          )}
+          {activePage.path === '/main' && renderMainDashboard()}
+          {activePage.path === '/close-call' && renderCloseCallDashboard()}
+          {activePage.path === '/safety' && renderSafetyDashboard()}
         </Box>
       </Box>
     </ThemeProvider>
