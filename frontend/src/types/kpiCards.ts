@@ -16,13 +16,3 @@ export interface KpiSummaryData {
   vehicleCount: number;
   vestViolationCount: number;
 }
-
-export interface CloseCallKpiData {
-  totalCloseCalls: number;
-  highSeverity: number;
-  mediumSeverity: number;
-  lowSeverity: number;
-  humanDetections: number;
-  vehicleDetections: number;
-  detectionRate?: number;
-}

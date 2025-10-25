@@ -5,9 +5,11 @@ import {
   Car,
   AlertCircle,
   Activity
-} from 'lucide-react';
-import { CloseCallKpiData } from '../types/kpiCards';
+} from 'lucide-react'
 import KpiCardGrid from './tools/kpiCard/KpiCardGrid';
+import { Alert, Box } from '@mui/material';
+import CloseCallSummaryCards from './CloseCallSummaryCards';
+import { CloseCallKpiData } from '../types/closeCall';
 
 
 interface CloseCallKpiSummaryProps {
@@ -19,6 +21,13 @@ const CloseCallKpiSummary: React.FC<CloseCallKpiSummaryProps> = ({
   data, 
   isLoading = false 
 }) => {
+   if (!data && !isLoading) {
+    return (
+      <Alert severity="info">
+        No KPI data available. Apply filters to see close call statistics.
+      </Alert>
+    );
+  }
   const kpiCards = [
     {
       title: 'Total Close Calls',
@@ -65,12 +74,21 @@ const CloseCallKpiSummary: React.FC<CloseCallKpiSummaryProps> = ({
   ];
 
   return (
-    <KpiCardGrid
-      cards={kpiCards}
-      isLoading={isLoading}
-      title="Close Call Summary"
-      gridConfig={{ xs: 12, sm: 6, md: 4, lg: 2 }}
-    />
+    <Box>
+      {/* Compact overview - perfect for limited space */}
+      <CloseCallSummaryCards 
+        data={data?.close_calls || null}
+        isLoading={isLoading}
+      />
+      
+      {/* Detailed breakdown - when users want more info */}
+      <KpiCardGrid
+        cards={kpiCards}
+        isLoading={isLoading}
+        title="Close Call Summary"
+        gridConfig={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+      />
+    </Box>
   );
 };
 

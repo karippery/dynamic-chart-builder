@@ -23,6 +23,7 @@ import CloseCallDetails from './components/CloseCallDetails';
 import { getDefaultCloseCallFilters, getResetCloseCallFilters } from './utils/closeCallUtils';
 import { SafetyDashboard } from './components/SafetyDashboard';
 import KpiSummary from './components/tools/kpiCard/KpiSummary';
+import CloseCallSummaryCards from './components/CloseCallSummaryCards';
 
 function App() {
   const { 
@@ -222,6 +223,12 @@ function App() {
                 onReset={handleResetCloseCallFilters}
                 isLoading={isCloseCallLoading}
               />
+              <Box sx={{ xs: 12, md: 3, mt: 3 }}>
+                <CloseCallSummaryCards 
+                  data={closeCallData}
+                  isLoading={isCloseCallLoading}
+                />
+              </Box>
             </Box>
           </Grid>
           

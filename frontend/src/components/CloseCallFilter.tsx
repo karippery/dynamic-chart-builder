@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Grid } from '@mui/material';
+import { Grid, Box } from '@mui/material';
 import { CloseCallFilters } from '../types/closeCall';
 import { getResetCloseCallFilters } from '../utils/closeCallUtils';
 import BaseFilter from './tools/filterbox/BaseFilter';
@@ -39,92 +38,96 @@ const CloseCallFilter: React.FC<CloseCallFilterProps> = (props) => {
 
   return (
     <BaseFilter {...props} title="Close Call Filters" resetFilters={getResetCloseCallFilters()}>
-      {/* Time Range */}
-      <Grid size={{ xs: 12 }}>
+      {/* Time Range - Side by Side */}
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="From Time"
           value={filters.from_time || ''}
           onChange={(value) => handleFilterChange('from_time', value)}
           type="datetime-local"
+          size="small"
         />
       </Grid>
       
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="To Time"
           value={filters.to_time || ''}
           onChange={(value) => handleFilterChange('to_time', value)}
           type="datetime-local"
+          size="small"
         />
       </Grid>
 
-      {/* Distance Threshold */}
-      <Grid size={{ xs: 12 }}>
+      {/* Thresholds - Side by Side */}
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Distance Threshold (meters)"
           value={filters.distance_threshold || 0}
           onChange={(value) => handleFilterChange('distance_threshold', value)}
           type="number"
+          size="small"
           inputProps={{ min: 0.1, max: 10, step: 0.1 }}
         />
       </Grid>
 
-      {/* Time Window */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Time Window (ms)"
           value={filters.time_window_ms || 0}
           onChange={(value) => handleFilterChange('time_window_ms', value)}
           type="number"
+          size="small"
           inputProps={{ min: 50, max: 1000, step: 50 }}
         />
       </Grid>
 
-      {/* Object Class */}
-      <Grid size={{ xs: 12 }}>
+      {/* Vehicle Class and Zone - Side by Side */}
+      <Grid size={{ xs: 12, sm: 6 }}>
         <SelectFilter
           label="Vehicle Class"
           value={filters.object_class || ''}
           onChange={(value) => handleFilterChange('object_class', value)}
           options={VEHICLE_CLASS_OPTIONS}
+          size="small"
         />
       </Grid>
 
-      {/* Zone */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <TextFilter
           label="Zone"
           value={filters.zone || ''}
           onChange={(value) => handleFilterChange('zone', value)}
           placeholder="Filter by specific zone"
+          size="small"
         />
       </Grid>
 
       {/* Time Bucket */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <SelectFilter
           label="Time Bucket"
           value={filters.time_bucket || ''}
           onChange={(value) => handleFilterChange('time_bucket', value)}
           options={TIME_BUCKET_OPTIONS}
+          size="small"
         />
       </Grid>
 
-      {/* Switches */}
+      {/* Switches - Side by Side in a compact box */}
       <Grid size={{ xs: 12 }}>
-        <SwitchFilter
-          label="Include Details"
-          checked={filters.include_details ?? true}
-          onChange={(checked) => handleFilterChange('include_details', checked)}
-        />
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <SwitchFilter
-          label="Force Refresh"
-          checked={filters.force_refresh ?? false}
-          onChange={(checked) => handleFilterChange('force_refresh', checked)}
-        />
+        <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+          <SwitchFilter
+            label="Include Details"
+            checked={filters.include_details ?? true}
+            onChange={(checked) => handleFilterChange('include_details', checked)}
+          />
+          <SwitchFilter
+            label="Force Refresh"
+            checked={filters.force_refresh ?? false}
+            onChange={(checked) => handleFilterChange('force_refresh', checked)}
+          />
+        </Box>
       </Grid>
     </BaseFilter>
   );

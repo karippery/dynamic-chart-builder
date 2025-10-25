@@ -90,6 +90,9 @@ export interface SafetyFilters {
   include_humans?: boolean;
   object_class?: string;
   force_refresh?: boolean;
+  distance_threshold?: number;
+  time_window_ms?: number;
+  include_details?: boolean;
 }
 
 export type SafetyFiltersType = SafetyFilters;

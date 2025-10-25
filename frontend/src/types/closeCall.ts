@@ -90,6 +90,31 @@ export interface CloseCallKpiData {
   humanDetections: number;
   vehicleDetections: number;
   detectionRate: number;
+  close_calls?: {
+    total_count: number;
+    by_severity: {
+      HIGH: number;
+      MEDIUM: number;
+      LOW: number;
+    };
+    by_vehicle_class: {
+      vehicle: number;
+      pallet_truck: number;
+      agv: number;
+    };
+    close_calls: Array<{
+      timestamp: string;
+      human_tracking_id: string;
+      vehicle_tracking_id: string;
+      vehicle_class: string;
+      distance: number;
+      severity: string;
+      human_zone: string;
+      vehicle_zone: string;
+      time_difference_ms: number;
+    }>;
+  } | null;
+  
 }
 
 // frontend/src/types/closeCall.ts - Add these interfaces

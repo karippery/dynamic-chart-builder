@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Chip,
   Typography,
@@ -10,6 +9,7 @@ import {
 import { OverspeedEvent, VestViolation } from '../types/safety';
 import { BaseTable } from './tools/tables/BaseTable';
 import { TableHeader, TableColumn } from './tools/tables/TableHeader';
+import { TablePagination } from './tools/tables/TablePagination';
 
 interface SafetyDataTableProps {
   title: string;
@@ -24,12 +24,33 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
   type,
   isLoading = false
 }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
+  // Handle page change
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Handle rows per page change
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Get current page data
+  const paginatedData = useMemo(() => {
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return data.slice(startIndex, endIndex);
+  }, [data, page, rowsPerPage]);
+
   // Define columns based on table type
-  const columns: TableColumn[] = React.useMemo(() => {
+  const columns: TableColumn[] = useMemo(() => {
     const baseColumns: TableColumn[] = [
       { id: 'timestamp', label: 'Timestamp', width: 180 },
       { id: 'tracking_id', label: 'Tracking ID' },
@@ -58,7 +79,7 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
     >
       <TableHeader columns={columns} />
       <TableBody>
-        {data.map((item) => (
+        {paginatedData.map((item) => (
           <TableRow key={item.id} hover>
             <TableCell>{formatDate(item.timestamp)}</TableCell>
             <TableCell>
@@ -101,6 +122,19 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
           </TableRow>
         ))}
       </TableBody>
+      
+      {/* Pagination Component */}
+      {data.length > 0 && (
+        <TablePagination
+          count={data.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          colSpan={columns.length}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        />
+      )}
     </BaseTable>
   );
 };
