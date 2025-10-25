@@ -8,7 +8,11 @@ export interface CloseCallFilters {
   include_details?: boolean;
   force_refresh?: boolean;
   time_bucket?: string;
+  page?: number;
+  page_size?: number;
 }
+
+// frontend/src/types/closeCall.ts
 
 export interface CloseCallResponse {
   total_count: number;
@@ -26,7 +30,7 @@ export interface CloseCallResponse {
     LOW: number;
   };
   time_series: Array<{
-    time: string;  // CORRECT: Backend uses 'time' not 'timestamp'
+    time: string;
     count: number;
   }>;
   close_calls: CloseCallDetail[];
@@ -42,6 +46,21 @@ export interface CloseCallResponse {
     cached: boolean;
     cache_key: string;
     served_from_cache: boolean;
+  };
+  // Add pagination property
+  pagination?: {
+    close_calls: {
+      count: number;
+      page: number;
+      pages: number;
+      page_size: number;
+    };
+    time_series: {
+      count: number;
+      page: number;
+      pages: number;
+      page_size: number;
+    };
   };
 }
 
@@ -82,13 +101,4 @@ export interface CloseCallDetailsResponse {
   page_size: number;
   total_pages: number;
   computed_at: string;
-}
-
-export interface CloseCallDetailsFilters {
-  page?: number;
-  page_size?: number;
-  severity?: string | null;
-  vehicle_class?: string | null;
-  from_time?: string;
-  to_time?: string;
 }

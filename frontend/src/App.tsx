@@ -42,7 +42,13 @@ function App() {
     group_by: ['object_class'],
     time_bucket: '1h',
   });
-
+  const handleCloseCallPageChange = (page: number, pageSize: number) => {
+    setAppliedCloseCallFilters(prev => ({
+      ...prev,
+      page,
+      page_size: pageSize,
+    }));
+  };
   const { aggregateData, isLoading: isAggregateLoading, error: aggregateError, refetch: refetchAggregate } = useAggregateData(filters);
 
   const [isFilterLoading, setIsFilterLoading] = useState(false);
@@ -226,6 +232,7 @@ function App() {
                   isLoading={isCloseCallLoading}
                   onSeverityFilter={handleSeverityFilter}
                   onVehicleClassFilter={handleVehicleClassFilter}
+                  onPageChange={handleCloseCallPageChange}
                 />
               )}
             </Box>
