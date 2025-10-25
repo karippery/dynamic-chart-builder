@@ -38,6 +38,20 @@ class CloseCallDetectionRequestSerializer(serializers.Serializer):
         default=True,
         help_text="Whether to include individual close call details in response"
     )
+    # Add pagination parameters
+    page = serializers.IntegerField(
+        default=1,
+        min_value=1,
+        required=False,
+        help_text="Page number for pagination"
+    )
+    page_size = serializers.IntegerField(
+        default=10,
+        min_value=1,
+        max_value=100,
+        required=False,
+        help_text="Number of items per page"
+    )
 
     def validate_distance_threshold(self, value):
         """Validate distance threshold."""
@@ -51,6 +65,19 @@ class CloseCallDetectionRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("Time window must be at least 50ms")
         return value
 
+    def validate_page(self, value):
+        """Validate page number."""
+        if value < 1:
+            raise serializers.ValidationError("Page number must be at least 1")
+        return value
+
+    def validate_page_size(self, value):
+        """Validate page size."""
+        if value < 1:
+            raise serializers.ValidationError("Page size must be at least 1")
+        if value > 100:
+            raise serializers.ValidationError("Page size cannot exceed 100")
+        return value
 
 class CloseCallDetailSerializer(serializers.Serializer):
     """Serializer for individual close call details."""
@@ -78,7 +105,7 @@ class CloseCallKPIResponseSerializer(serializers.Serializer):
     total_count = serializers.IntegerField(help_text="Total number of close calls detected")
     parameters_used = serializers.DictField(
         help_text="Parameters used for computation",
-        required=False  # Make it optional
+        required=False
     )
     by_vehicle_class = serializers.DictField(help_text="Close calls grouped by vehicle class")
     by_severity = serializers.DictField(help_text="Close calls grouped by severity level")
@@ -101,6 +128,11 @@ class CloseCallKPIResponseSerializer(serializers.Serializer):
         help_text="Whether details are included",
         required=False
     )
+    # Add pagination metadata
+    pagination = serializers.DictField(
+        help_text="Pagination information for close_calls and time_series",
+        required=False
+    )
 
     def to_representation(self, instance):
         """Custom representation to handle flexible data structure."""
@@ -111,7 +143,6 @@ class CloseCallKPIResponseSerializer(serializers.Serializer):
             data.pop('close_calls', None)
             
         return data
-
 
 class OverspeedKPISerializer(serializers.Serializer):
     """Serializer for overspeed KPI response."""

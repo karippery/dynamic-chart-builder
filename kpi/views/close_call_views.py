@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExampl
 from django.utils import timezone
 from django.core.cache import cache
 
+from kpi.common.pagination import DefaultPagination
 from kpi.serializers.close_call_serializers import (
     CloseCallDetectionRequestSerializer,
     CloseCallKPIResponseSerializer,
@@ -21,6 +22,8 @@ class CloseCallKPIView(APIView):
     Computes close calls between humans and vehicles in real-time
     without persisting results. Follows KPI builder pattern.
     """
+    
+    pagination_class = DefaultPagination
     
     @extend_schema(
         parameters=[
@@ -76,6 +79,18 @@ class CloseCallKPIView(APIView):
                 type=bool,
                 default=False
             ),
+            OpenApiParameter(
+                name='page',
+                description='Page number for pagination',
+                type=int,
+                default=1
+            ),
+            OpenApiParameter(
+                name='page_size',
+                description='Number of items per page',
+                type=int,
+                default=10
+            ),
         ],
         examples=[
             OpenApiExample(
@@ -107,12 +122,18 @@ class CloseCallKPIView(APIView):
             include_details = params.pop('include_details', True)
             time_bucket = params.pop('time_bucket', '1h')
             force_refresh = params.pop('force_refresh', False)
-
-            if 'object_class' in params:
-                params['vehicle_class'] = params.pop('object_class')
             
-            # Generate cache key
-            cache_key = generate_cache_key(params)
+            # Extract pagination parameters separately
+            page = params.pop('page', 1)
+            page_size = params.pop('page_size', 10)
+            
+            # Generate cache key (include pagination params for cache variation)
+            cache_params = params.copy()
+            cache_params.update({
+                'page': page,
+                'page_size': page_size
+            })
+            cache_key = generate_cache_key(cache_params)
             
             # Check cache first (unless force refresh)
             if not force_refresh:
@@ -127,11 +148,43 @@ class CloseCallKPIView(APIView):
                     response_serializer = CloseCallKPIResponseSerializer(cached_result)
                     return Response(response_serializer.data)
             
-            # Initialize KPI computer
+            # Initialize KPI computer with only relevant parameters
             kpi_computer = CloseCallKPI(**params)
             
             # Compute close calls (no persistence)
             results = kpi_computer.compute_close_calls()
+            
+            # Apply pagination to close_calls and time_series
+            paginator = self.pagination_class()
+            paginator.page_size = page_size
+            
+            # Paginate close_calls
+            close_calls_data = results.get('close_calls', [])
+            paginated_close_calls = paginator.paginate_queryset(close_calls_data, request, view=self)
+            
+            # Paginate time_series
+            time_series_data = results.get('time_series', [])
+            paginated_time_series = paginator.paginate_queryset(time_series_data, request, view=self)
+            
+            # Update results with paginated data
+            results['close_calls'] = paginated_close_calls
+            results['time_series'] = paginated_time_series
+            
+            # Add pagination metadata
+            results['pagination'] = {
+                'close_calls': {
+                    'count': len(close_calls_data),
+                    'page': paginator.page.number,
+                    'pages': paginator.page.paginator.num_pages if hasattr(paginator.page, 'paginator') else 1,
+                    'page_size': paginator.get_page_size(request)
+                },
+                'time_series': {
+                    'count': len(time_series_data),
+                    'page': paginator.page.number,
+                    'pages': paginator.page.paginator.num_pages if hasattr(paginator.page, 'paginator') else 1,
+                    'page_size': paginator.get_page_size(request)
+                }
+            }
             
             # Add metadata
             results['parameters_used'] = params
@@ -157,8 +210,9 @@ class CloseCallKPIView(APIView):
                 {'error': f'Close-call computation failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
 
-
+        
 class SafetyKPIView(APIView):
     """
     API endpoint for comprehensive safety KPI computation.
