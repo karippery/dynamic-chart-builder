@@ -20,7 +20,6 @@ import { CloseCallFilters } from './types/closeCall';
 import { useCloseCallData } from './hooks/useCloseCallData';
 import CloseCallFilter from './components/CloseCallFilter';
 import CloseCallKpiSummary from './components/CloseCallKpiSummary';
-import CloseCallChart from './components/CloseCallChart';
 import CloseCallDetails from './components/CloseCallDetails';
 import { getDefaultCloseCallFilters, getResetCloseCallFilters } from './utils/closeCallUtils';
 
@@ -229,15 +228,6 @@ function App() {
                   onVehicleClassFilter={handleVehicleClassFilter}
                 />
               )}
-              <CloseCallChart
-                data={closeCallData}
-                timeBucket={closeCallFilters.time_bucket || '1h'}
-                isLoading={isCloseCallLoading}
-                error={closeCallError}
-                selectedSeverity={tableFilters.severity}
-                selectedVehicleClass={tableFilters.vehicleClass}
-              />
-              
             </Box>
           </Grid>
         </Grid>
