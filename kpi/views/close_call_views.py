@@ -104,9 +104,6 @@ class CloseCallKPIView(APIView):
     def get(self, request):
         """
         Compute close-call KPIs on-demand.
-        
-        Returns aggregated metrics without persisting results.
-        Suitable for real-time dashboard and reporting.
         """
         # Validate query parameters
         serializer = CloseCallDetectionRequestSerializer(data=request.query_params)
@@ -126,6 +123,10 @@ class CloseCallKPIView(APIView):
             # Extract pagination parameters separately
             page = params.pop('page', 1)
             page_size = params.pop('page_size', 10)
+            
+            # Map 'object_class' to 'vehicle_class' for CloseCallKPI
+            if 'object_class' in params:
+                params['vehicle_class'] = params.pop('object_class')
             
             # Generate cache key (include pagination params for cache variation)
             cache_params = params.copy()
