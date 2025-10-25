@@ -22,6 +22,7 @@ import CloseCallFilter from './components/CloseCallFilter';
 import CloseCallKpiSummary from './components/CloseCallKpiSummary';
 import CloseCallDetails from './components/CloseCallDetails';
 import { getDefaultCloseCallFilters, getResetCloseCallFilters } from './utils/closeCallUtils';
+import { SafetyDashboard } from './components/SafetyDashboard';
 
 function App() {
   const { 
@@ -242,22 +243,11 @@ function App() {
     </Box>
   );
 
-  const renderSafetyDashboard = () => (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Safety Metrics
-      </Typography>
-      <Typography variant="body1" paragraph>
-        Comprehensive safety performance indicators and compliance tracking.
-        View safety reports, incident trends, and improvement recommendations.
-      </Typography>
-      <Box sx={{ mt: 3, p: 3, backgroundColor: 'background.default', borderRadius: 1 }}>
-        <Typography variant="body2" color="text.secondary" fontStyle="italic">
-          Safety compliance metrics and reports will be displayed here.
-        </Typography>
+    const renderSafetyDashboard = () => (
+      <Box sx={{ mt: 2 }}>
+        <SafetyDashboard refreshCount={refreshCount} />
       </Box>
-    </Box>
-  );
+    );
 
   return (
     <ThemeProvider theme={theme}>
