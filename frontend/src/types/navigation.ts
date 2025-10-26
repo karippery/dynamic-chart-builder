@@ -1,4 +1,7 @@
+import { ReactElement } from "react";
+
 export interface NavigationItem {
+  icon?: ReactElement;
   label: string;
   path: string;
   active?: boolean;

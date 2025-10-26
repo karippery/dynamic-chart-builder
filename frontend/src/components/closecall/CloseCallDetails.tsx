@@ -66,6 +66,25 @@ const CloseCallDetails: React.FC<CloseCallDetailsProps> = ({
     onVehicleClassFilter?.(null);
   }, [onSeverityFilter, onVehicleClassFilter]);
 
+  // Prepare data for CSV export - flatten the data structure
+  const exportData = useMemo(() => {
+    if (!data?.close_calls) return [];
+    
+    return data.close_calls.map(call => ({
+      timestamp: call.timestamp,
+      formatted_timestamp: formatCloseCallTime(call.timestamp),
+      human_tracking_id: call.human_tracking_id,
+      vehicle_tracking_id: call.vehicle_tracking_id,
+      vehicle_class: call.vehicle_class,
+      distance: call.distance,
+      severity: call.severity,
+      human_zone: call.human_zone || 'N/A',
+      vehicle_zone: call.vehicle_zone || 'N/A',
+      time_difference_ms: call.time_difference_ms,
+      // Add any other fields you want to export
+    }));
+  }, [data?.close_calls]);
+
   // Table columns configuration
   const columns: TableColumn[] = useMemo(() => [
     { id: 'timestamp', label: 'Timestamp', sortable: true, width: 180 },
@@ -177,9 +196,11 @@ const CloseCallDetails: React.FC<CloseCallDetailsProps> = ({
         </Box>
         
         <BaseTable
-          data={displayCalls}
+          data={exportData} // Use the flattened export data for CSV export
           isLoading={isLoading}
           height={600}
+          tableId="close-call-details" // Add tableId to enable CSV export
+          title="Close Call Details" // Add title for CSV filename
         >
           <TableHeader 
             columns={columns}

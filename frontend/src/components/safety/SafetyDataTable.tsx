@@ -7,7 +7,7 @@ import {
   TableCell,
 } from '@mui/material';
 import { OverspeedEvent, VestViolation } from '../../types/safety';
-import { BaseTable } from '../tools/tables/BaseTable';
+import { BaseTable } from '../tools/tables/BaseTable'; // Use your existing BaseTable
 import { TableHeader, TableColumn } from '../tools/tables/TableHeader';
 import { TablePagination } from '../tools/tables/TablePagination';
 
@@ -22,10 +22,13 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
   title,
   data,
   type,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Generate unique table ID for PDF export
+  const tableId = `safety-table-${type}`;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -76,6 +79,7 @@ export const SafetyDataTable: React.FC<SafetyDataTableProps> = ({
       isLoading={isLoading}
       emptyMessage="No data available"
       height={400}
+      tableId={tableId} 
     >
       <TableHeader columns={columns} />
       <TableBody>

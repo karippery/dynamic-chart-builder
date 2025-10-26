@@ -65,6 +65,7 @@ export interface CloseCallResponse {
 }
 
 export interface CloseCallDetail {
+  id: number;
   timestamp: string;
   human_tracking_id: string;
   human_x: number;

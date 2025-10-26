@@ -8,7 +8,10 @@ import NavBar from './components/NavBar';
 import MainDashboard from './components/dashboards/MainDashboard';
 import CloseCallDashboard from './components/closecall/CloseCallDashboard';
 import { SafetyDashboard } from './components/safety/SafetyDashboard';
+import { AggregationFilters } from './types/filters';
+import { CloseCallFilters } from './types/closeCall';
 
+// Update App.tsx
 function App() {
   const {
     // Navigation
@@ -22,13 +25,59 @@ function App() {
     
     // Error state
     error,
+    
     // Close call dashboard
     closeCallKpiData,
     isCloseCallLoading,
-    closeCallError
+    closeCallError,
+    
+    // Filters for all pages
+    filters, // Main dashboard filters
+    closeCallFilters, // Close-call filters
+    appliedCloseCallFilters,
+    
+    // Filter handlers
+    handleApplyFilters,
+    handleApplyCloseCallFilters,
+    // Add safety filter handlers when available
   } = useApp();
 
   const pageContent = getPageContent();
+
+  // Handler for preset selection from any page
+  const handlePresetSelect = (presetFilters: any, pageType: string) => {
+    console.log('Applying preset for page:', pageType, presetFilters);
+    
+    switch (pageType) {
+      case 'main':
+        handleApplyFilters(presetFilters as AggregationFilters);
+        break;
+      case 'close-call':
+        handleApplyCloseCallFilters(presetFilters as CloseCallFilters);
+        break;
+      case 'safety':
+        // Add safety filter handler when available
+        console.log('Safety preset applied:', presetFilters);
+        // handleApplySafetyFilters(presetFilters); // Uncomment when you have safety filters
+        break;
+      default:
+        console.warn('Unknown page type for preset:', pageType);
+    }
+  };
+
+  // Get current filters based on active page
+  const getCurrentFilters = () => {
+    switch (activePage.path) {
+      case '/main':
+        return filters;
+      case '/close-call':
+        return appliedCloseCallFilters || closeCallFilters;
+      case '/safety':
+        return {}; // Return safety filters when available
+      default:
+        return filters;
+    }
+  };
 
   const renderDashboard = () => {
     switch (activePage.path) {
@@ -61,6 +110,9 @@ function App() {
           toggleValue={toggleState}
           toggleLabel="Live Mode"
           activePath={activePage.path}
+          // Pass current filters and preset handler
+          currentFilters={getCurrentFilters()}
+          onPresetSelect={handlePresetSelect}
         />
         
         <Box component="main" sx={{ flex: 1, p: 4 }}>
