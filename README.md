@@ -144,4 +144,5 @@ docker-compose exec web python manage.py generate_fake_close_calls
 
 ## Demo
 
+![KPI-Dashboard](https://github.com/user-attachments/assets/cf1d55b5-34a0-4a63-b2ee-84b19403e0d9)
 
