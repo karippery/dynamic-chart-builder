@@ -213,6 +213,66 @@ def derive_speed_for_object(object_id, from_time=None, to_time=None):
     
     return sum(speeds) / len(speeds) if speeds else 0.0
 
+def derive_speeds_bulk(object_ids, from_time=None, to_time=None):
+    """
+    Bulk calculate speeds for multiple objects efficiently.
+    Returns dict of {object_id: average_speed}
+    """
+    if not object_ids:
+        return {}
+    
+    # Get all detections for these objects in one query
+    detections_qs = Detection.objects.filter(
+        tracking_id__in=object_ids
+    )
+    
+    if from_time:
+        detections_qs = detections_qs.filter(timestamp__gte=from_time)
+    if to_time:
+        detections_qs = detections_qs.filter(timestamp__lte=to_time)
+    
+    # Order and prefetch
+    detections_qs = detections_qs.order_by('tracking_id', 'timestamp')
+    
+    # Process in memory
+    detections_list = list(detections_qs)
+    
+    speed_results = {}
+    current_obj_id = None
+    obj_speeds = []
+    prev_detection = None
+    
+    for detection in detections_list:
+        if detection.tracking_id != current_obj_id:
+            # Process previous object
+            if current_obj_id and obj_speeds:
+                speed_results[current_obj_id] = sum(obj_speeds) / len(obj_speeds)
+            elif current_obj_id:
+                speed_results[current_obj_id] = 0.0
+            
+            # Reset for new object
+            current_obj_id = detection.tracking_id
+            obj_speeds = []
+            prev_detection = detection
+            continue
+        
+        # Calculate speed between consecutive detections
+        time_diff = (detection.timestamp - prev_detection.timestamp).total_seconds()
+        if time_diff > 0:
+            distance = ((detection.x - prev_detection.x)**2 + (detection.y - prev_detection.y)**2)**0.5
+            speed = distance / time_diff
+            obj_speeds.append(speed)
+        
+        prev_detection = detection
+    
+    # Process last object
+    if current_obj_id and obj_speeds:
+        speed_results[current_obj_id] = sum(obj_speeds) / len(obj_speeds)
+    elif current_obj_id:
+        speed_results[current_obj_id] = 0.0
+    
+    return speed_results
+
 
 def get_overspeed_detections_with_derived_speed(
     speed_threshold=1.5,
@@ -220,23 +280,16 @@ def get_overspeed_detections_with_derived_speed(
     to_time=None,
     zone=None,
     object_class=None,
-    include_humans=False
+    include_humans=False,
+    max_objects=500  # Reasonable limit
 ):
     """
-    MORE EFFICIENT version - avoids union and handles annotations properly.
+    Optimized version using bulk processing.
     """
     from_time = parse_if_str(from_time)
     to_time = parse_if_str(to_time)
     
-    # Start with direct speed violations
-    qs = get_overspeed_detections(
-        speed_threshold, from_time, to_time, zone, object_class, include_humans
-    )
-    
-    # Get IDs of direct overspeed detections
-    direct_overspeed_ids = set(qs.values_list('id', flat=True))
-    
-    # Find objects that don't have speed data but might be overspeeding
+    # Base filters
     base_filters = Q()
     if object_class:
         base_filters &= Q(object_class=object_class)
@@ -256,34 +309,40 @@ def get_overspeed_detections_with_derived_speed(
     if zone:
         base_filters &= Q(zone=zone)
     
-    # Get unique objects without speed data
+    # Step 1: Get direct overspeed detections
+    direct_overspeed = Detection.objects.filter(
+        base_filters & Q(speed__gt=speed_threshold)
+    ).values_list('id', flat=True)
+    
+    # Step 2: Get limited set of objects without speed data
     objects_without_speed = Detection.objects.filter(
         base_filters & (Q(speed__isnull=True) | Q(speed=0))
-    ).values_list('tracking_id', flat=True).distinct()
+    ).values_list('tracking_id', flat=True).distinct()[:max_objects]
     
-    # Check derived speeds and collect IDs
-    derived_overspeed_ids = set()
-    for obj_id in objects_without_speed:
-        derived_speed = derive_speed_for_object(obj_id, from_time, to_time)
-        if derived_speed > speed_threshold:
-            # Get detection IDs for this overspeeding object
-            obj_detection_ids = Detection.objects.filter(
-                tracking_id=obj_id
-            )
-            if from_time:
-                obj_detection_ids = obj_detection_ids.filter(timestamp__gte=from_time)
-            if to_time:
-                obj_detection_ids = obj_detection_ids.filter(timestamp__lte=to_time)
-            if zone:
-                obj_detection_ids = obj_detection_ids.filter(zone=zone)
-            
-            derived_overspeed_ids.update(obj_detection_ids.values_list('id', flat=True))
+    objects_without_speed = list(objects_without_speed)
     
-    # Combine all IDs
-    all_overspeed_ids = direct_overspeed_ids.union(derived_overspeed_ids)
+    # Step 3: Bulk calculate speeds
+    derived_speeds = derive_speeds_bulk(objects_without_speed, from_time, to_time)
+    
+    # Step 4: Find overspeeding objects
+    overspeeding_objects = [
+        obj_id for obj_id, speed in derived_speeds.items() 
+        if speed > speed_threshold
+    ]
+    
+    # Step 5: Get detection IDs for overspeeding objects
+    if overspeeding_objects:
+        derived_overspeed_ids = Detection.objects.filter(
+            tracking_id__in=overspeeding_objects
+        ).filter(base_filters).values_list('id', flat=True)
+    else:
+        derived_overspeed_ids = []
+    
+    # Step 6: Combine all IDs
+    all_overspeed_ids = set(direct_overspeed) | set(derived_overspeed_ids)
     
     if not all_overspeed_ids:
         return Detection.objects.none()
     
-    # Return a clean queryset that supports annotations
     return Detection.objects.filter(id__in=all_overspeed_ids)
+

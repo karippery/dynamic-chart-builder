@@ -46,7 +46,6 @@ function App() {
 
   // Handler for preset selection from any page
   const handlePresetSelect = (presetFilters: any, pageType: string) => {
-    console.log('Applying preset for page:', pageType, presetFilters);
     
     switch (pageType) {
       case 'main':

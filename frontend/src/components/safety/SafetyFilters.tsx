@@ -29,7 +29,7 @@ const SafetyFilters: React.FC<SafetyFiltersProps> = (props) => {
   const resetFilters: SafetyFiltersType = {
     page: 1,
     time_bucket: '1h',
-    distance_threshold: 2.0,
+    distance_threshold: 1,
     time_window_ms: 5000,
     include_details: false,
     force_refresh: false

@@ -431,6 +431,7 @@ class VestViolationsView(APIView):
                 {'error': f'Invalid parameter format: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         except Exception as e:
             return Response(
                 {'error': f'Vest violations computation failed: {str(e)}'},

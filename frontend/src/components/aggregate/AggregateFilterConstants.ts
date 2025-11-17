@@ -4,7 +4,7 @@ import { AggregationFilters } from '../../types/filters';
 export const DEFAULT_FILTERS: AggregationFilters = {
   metric: 'count',
   entity: '',
-  group_by: ['time_bucket'],
+  group_by: ['object_class'],
   time_bucket: '1h',
   object_class: [],
   vest: undefined,

@@ -25,7 +25,6 @@ const DashboardFileUpload: React.FC<DashboardFileUploadProps> = ({
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   const handleUploadSuccess = (response: UploadResponse) => {
-    console.log('Upload successful:', response);
     onUploadSuccess?.(response);
     
     setTimeout(() => {

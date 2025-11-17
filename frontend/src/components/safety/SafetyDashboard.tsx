@@ -43,7 +43,7 @@ export const SafetyDashboard: React.FC<SafetyDashboardProps> = ({ refreshCount }
       page: 1,
       page_size: 10,
       time_bucket: '1h',
-      distance_threshold: 2.0,
+      distance_threshold: 1,
       time_window_ms: 5000,
       include_details: false,
       force_refresh: false,

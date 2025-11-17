@@ -16,7 +16,7 @@ export const formatCloseCallTime = (timestamp: string): string => {
 
 // Define constants outside the function
 const DEFAULT_CLOSE_CALL_FILTERS: CloseCallFilters = {
-  distance_threshold: 2.0,
+  distance_threshold: 1.0,
   time_window_ms: 250,
   include_details: true,
   time_bucket: '1h',
