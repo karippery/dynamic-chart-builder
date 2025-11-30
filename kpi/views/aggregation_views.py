@@ -138,3 +138,5 @@ class AggregationView(APIView):
                 {'error': f'Aggregation failed: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+

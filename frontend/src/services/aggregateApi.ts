@@ -30,7 +30,7 @@ class AggregateApiService extends ApiService {
   async getTotalCount(): Promise<number> {
     try {
       const data: ApiResponse<KpiData> = await this.get('kpi/aggregate/', {
-        entity: 'objects',
+        // entity: 'objects',
         metric: 'count',
         group_by: 'id'
       });
@@ -44,7 +44,7 @@ class AggregateApiService extends ApiService {
   async getHumanCount(): Promise<number> {
     try {
       const data: ApiResponse<KpiData> = await this.get('kpi/aggregate/', {
-        entity: 'objects',
+        // entity: 'objects',
         metric: 'count',
         group_by: 'object_class',
         object_class: 'human'
@@ -59,7 +59,7 @@ class AggregateApiService extends ApiService {
   async getVehicleCount(): Promise<number> {
     try {
       const data: ApiResponse<KpiData> = await this.get('kpi/aggregate/', {
-        entity: 'objects', 
+        // entity: 'objects', 
         metric: 'count',
         group_by: 'object_class',
         object_class: 'vehicle'
@@ -74,7 +74,7 @@ class AggregateApiService extends ApiService {
   async getVestViolationCount(): Promise<number> {
     try {
       const data: ApiResponse<KpiData> = await this.get('kpi/aggregate/', {
-        entity: 'objects',
+        // entity: 'objects',
         metric: 'count',
         group_by: 'object_class',
         object_class: 'human',
@@ -90,7 +90,7 @@ class AggregateApiService extends ApiService {
   async getAggregateData(params: AggregateQueryParams): Promise<ApiResponse<KpiData>> {
     // Ensure entity is always included if not provided
     const cleanParams = {
-      entity: 'objects', // Default entity
+      // entity: 'objects', // Default entity
       ...params
     };
     

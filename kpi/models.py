@@ -84,6 +84,7 @@ class Detection(models.Model):
         """Convenience property for coordinate pair."""
         return (self.x, self.y)
     
+
 class CloseCallEvent(models.Model):
     """
     Records close-call safety events between humans and vehicles.
